@@ -1,8 +1,0 @@
-
-Python implementation of the Epigenetic Robotic Architecture (ERA). It includes standalone classes for Self-Organizing Maps (SOM) and Hebbian Leaning.
-
-
-What is ERA?
-------------
-
-The Epigenetic Robotic Architecture (ERA) is a hybrid behavior-based robotics and neural architecture purposely built to implement embodied principles in cognitive development. This architecture has been already tested in a variety of cognitive and developmental tasks directly modeling child psychology data. The ERA architecture uses a behavior-based subsumption mechanism to handle the integration of competing sensorimotor behaviors (e.g. motion tracking, face tracking, language learning, language use, joint attention). The learning system is based on an ensemble of pre-trained Self-Organizing Maps (SOMs) connected via Hebbian weights. Various SOMs perform vision (shape and color SOMs), motor (body SOM) and speech classification tasks and learn hierarchical associations between modalities. The body SOM constitutes the “cognitive hub” of the agent’s controller and implements Smith and Samuelson’s embodied developmental mechanisms. During interaction with the users in a learning phase, the connections weights between different modalities are trained via Hebbian rule. 
