@@ -43,6 +43,10 @@ Examples
 
 1. How to pre-train a Self-Organizing Map to classify six different RGB colours [[code]](examples/ex_som_colours.py)
 
+<p align="center">
+<img src="examples/ex_som_colours.png">
+</p>
+
 
 References
 -----------
