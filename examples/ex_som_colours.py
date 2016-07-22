@@ -47,7 +47,7 @@ def main():
             img = np.rint(my_som.return_weights_matrix()*255)
             plt.axis("off")
             plt.imshow(img)
-            plt.savefig("/home/massimiliano/pyERA/examples/images/" + str(epoch/frequency) + ".png")
+            plt.savefig("/home/massimiliano/pyERA/examples/images/" + str(epoch) + ".png")
 
         #Updating the learning rate and the radius
         learning_rate = my_learning_rate.return_decayed_value(global_step=epoch)
