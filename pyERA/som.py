@@ -153,7 +153,7 @@ class Som:
         return self._weights_matrix[row, col, :]
 
 
-    def training_single_step(self, input_vector, units_list, learning_rate, radius):
+    def training_single_step(self, input_vector, units_list, learning_rate, radius, weighted_distance=False):
         """A single step of the training procedure.
 
         It updates the weights using the Kohoen learning rule.
@@ -170,14 +170,16 @@ class Som:
             #The distance_rate take into account the distance of the unit
             #from the BMU and permits regulating the updating of the weights
             #with more decision for units that are close to the BMU.
-            #distance_rate = np.exp(- np.power(dist,2)/(2*np.power(radius,2)))
+            if(weighted_distance == True):
+                distance_rate = np.exp(- np.power(dist,2)/(2*np.power(radius,2)))
+                self._weights_matrix[row, col, :] = self._weights_matrix[row, col, :] + distance_rate * learning_rate * (input_vector - self._weights_matrix[row, col, :])
+            else:
+                #Update the weights of the neighborood units
+                #The new weight is equal to the old one plus a fracion
+                # of the difference between the input_vector and the
+                # unit weights
+                self._weights_matrix[row, col, :] = self._weights_matrix[row, col, :] + learning_rate * (input_vector - self._weights_matrix[row, col, :])
 
-            #Update the weights of the neighborood units
-            #The new weight is equal to the old one plus a fracion
-            # of the difference between the input_vector and the
-            # unit weights
-            #self._weights_matrix[row, col, :] = self._weights_matrix[row, col, :] + distance_rate * learning_rate * (input_vector - self._weights_matrix[row, col, :])
-            self._weights_matrix[row, col, :] = self._weights_matrix[row, col, :] + learning_rate * (input_vector - self._weights_matrix[row, col, :])
 
 
 
