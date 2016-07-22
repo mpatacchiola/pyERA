@@ -4,8 +4,8 @@
 #
 # This code uses Self-Organizing Map (SOM) to classify six colours.
 # For each epoch it is possible to save an image which represents the weights of the SOM.
-# Each weight is a3D numpy array with calues ranging between 0 and 1. The values can be converted
-# to RGB values in the range [0,255] and then displayed as colours.
+# Each weight is a 3D numpy array with values ranging between 0 and 1. The values can be converted
+# to RGB in the range [0,255] and then displayed as colours.
 # I used avconv to convert the images to a video: avconv -f image2 -i %d.png -r 12 -s 800x600 output.avi
 # The name of the images must be in order, if there is one or more missing names (ex: 18.png, 25.png) 
 # an empty video will be created.
@@ -22,22 +22,23 @@ import matplotlib.image as mpimg
 #It requires the pyERA library
 from pyERA.som import Som
 from pyERA.utils import ExponentialDecay
-
+from pyERA.utils import LinearDecay
 
 
 def main():
 
     #Set to True if you want to save the SOM images inside a folder.
-    SAVE_IMAGE = False
+    SAVE_IMAGE = True
 
     #Init the SOM
     som_size = 64
     my_som = Som(matrix_size=64, input_size=3, low=0, high=1, round_values=False)
 
     #Init the parameters
-    tot_epoch = 1800
+    tot_epoch = 1500
     my_learning_rate = ExponentialDecay(starter_value=0.5, decay_step=50, decay_rate=0.9, staircase=True)
-    my_radius = ExponentialDecay(starter_value=32, decay_step=80, decay_rate=0.85, staircase=True)
+    #my_radius = ExponentialDecay(starter_value=32, decay_step=80, decay_rate=0.85, staircase=True)
+    my_radius = LinearDecay(starter_value=30, decay_rate=0.02, allow_negative=False)
 
     #Starting the Learning
     for epoch in range(1, tot_epoch):
@@ -47,7 +48,7 @@ def main():
             img = np.rint(my_som.return_weights_matrix()*255)
             plt.axis("off")
             plt.imshow(img)
-            plt.savefig("/home/massimiliano/pyERA/examples/images/" + str(epoch) + ".png")
+            plt.savefig("/home/massimiliano/pyERA/examples/images/" + str(epoch) + ".png", dpi=None, facecolor='black')
 
         #Updating the learning rate and the radius
         learning_rate = my_learning_rate.return_decayed_value(global_step=epoch)
@@ -74,7 +75,7 @@ def main():
         bmu_neighborhood_list = my_som.return_unit_round_neighborhood(bmu_index[0], bmu_index[1], radius=radius)  
 
         #Learning step      
-        my_som.training_single_step(input_vector, units_list=bmu_neighborhood_list, learning_rate=learning_rate, radius=radius)
+        my_som.training_single_step(input_vector, units_list=bmu_neighborhood_list, learning_rate=learning_rate, radius=radius, weighted_distance=False)
 
         print("")
         print("Epoch: " + str(epoch))
