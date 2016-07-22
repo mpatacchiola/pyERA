@@ -37,3 +37,33 @@ class ExponentialDecay:
             else:
                 return self.last_value 
 
+
+class LinearDecay:
+
+    def __init__(self, starter_value, decay_rate, allow_negative=True):
+        """Function that applyes an exponential decay to a value.
+
+        @param starting_value the value to decay
+        @param decay_rate 
+        """
+        self.starter_value = starter_value
+        self.decay_rate = decay_rate
+        self.allow_negative = allow_negative
+
+    def return_decayed_value(self, global_step):
+        """Returns the decayed value.
+
+        decayed_value = starting_value * decay_rate ^ (global_step / decay_steps)
+        @param global_step the global step to use for decay (positive integer)
+        """      
+        decayed_value = self.starter_value - (self.decay_rate * global_step)
+        if(self.allow_negative == False and decayed_value < 0): return 0.0
+        else: return decayed_value
+
+
+
+
+
+
+
+
