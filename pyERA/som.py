@@ -68,6 +68,33 @@ class Som:
 
          return output_list
 
+    def return_unit_round_neighborhood(self, row, col, ray):
+         output_list = list()
+         if(ray <= 0): output_list.append((row, col, 0)); return output_list #return empty if ray=0
+
+         #Finding the square around the unit
+         #with wide=ray using the ceil of ray
+         row_range_min = row - int(np.ceil(ray))
+         if(row_range_min < 0): row_range_min = 0
+         row_range_max = row + int(np.ceil(ray))
+         if(row_range_max >= self._matrix_size): row_range_max = self._matrix_size - 1
+         col_range_min = col - int(np.ceil(ray))
+         if(col_range_min < 0): col_range_min = 0
+         col_range_max = col + int(np.ceil(ray))
+         if(col_range_max >= self._matrix_size): col_range_max = self._matrix_size - 1
+
+         for row_iter in range(row_range_min, row_range_max+1):
+             for col_iter in range(col_range_min, col_range_max+1):
+                 #Finding the distances from the BMU
+                 col_distance = np.abs(col - col_iter)
+                 row_distance = np.abs(row - row_iter)
+                 #Pitagora's Theorem to estimate distance
+                 distance = np.sqrt( np.power(col_distance,2) + np.power(row_distance,2) )
+                 #Store the unit only if the distance is
+                 #less than the ray
+                 if(distance <= ray): output_list.append((row_iter, col_iter, distance))
+
+         return output_list
 
     def return_euclidean_distance(self, a, b):
         return np.linalg.norm(a-b)
