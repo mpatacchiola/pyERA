@@ -1,11 +1,18 @@
 #!/usr/bin/python
 
+#Add the pyERA package
+import sys
+sys.path.insert(0, "../")
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 #import pyERA.som
 from pyERA.som import Som
 from pyERA.utils import ExponentialDecay
+
+
+
 
 def main():
 
