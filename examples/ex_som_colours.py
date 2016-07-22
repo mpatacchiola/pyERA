@@ -35,8 +35,8 @@ def main():
     my_som = Som(matrix_size=64, input_size=3, low=0, high=1, round_values=False)
 
     #Init the parameters
-    tot_epoch = 1000
-    my_learning_rate = ExponentialDecay(starter_value=0.9, decay_step=50, decay_rate=0.9, staircase=True)
+    tot_epoch = 1800
+    my_learning_rate = ExponentialDecay(starter_value=0.5, decay_step=50, decay_rate=0.9, staircase=True)
     my_radius = ExponentialDecay(starter_value=32, decay_step=80, decay_rate=0.85, staircase=True)
 
     #Starting the Learning
