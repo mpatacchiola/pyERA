@@ -23,10 +23,12 @@ import matplotlib.image as mpimg
 from pyERA.som import Som
 from pyERA.utils import ExponentialDecay
 
-#Set to True if you want to save the SOM images inside a folder.
-SAVE_IMAGE == False
+
 
 def main():
+
+    #Set to True if you want to save the SOM images inside a folder.
+    SAVE_IMAGE = False
 
     #Init the SOM
     som_size = 64
@@ -57,12 +59,12 @@ def main():
         colour_range = float(colour_range) / 255.0
         #colour_range = np.random.random_sample()
         #colour_range = 1
-        if(colour_selected == 0): input_vector = np.arradius([colour_range, 0, 0]) #RED
-        if(colour_selected == 1): input_vector = np.arradius([0, colour_range, 0]) #GREEN
-        if(colour_selected == 2): input_vector = np.arradius([0, 0, colour_range]) #BLUE
-        if(colour_selected == 3): input_vector = np.arradius([colour_range, colour_range, 0]) #YELLOW
-        if(colour_selected == 4): input_vector = np.arradius([0, colour_range, colour_range]) #LIGHT-BLUE
-        if(colour_selected == 5): input_vector = np.arradius([colour_range, 0, colour_range]) #PURPLE
+        if(colour_selected == 0): input_vector = np.array([colour_range, 0, 0]) #RED
+        if(colour_selected == 1): input_vector = np.array([0, colour_range, 0]) #GREEN
+        if(colour_selected == 2): input_vector = np.array([0, 0, colour_range]) #BLUE
+        if(colour_selected == 3): input_vector = np.array([colour_range, colour_range, 0]) #YELLOW
+        if(colour_selected == 4): input_vector = np.array([0, colour_range, colour_range]) #LIGHT-BLUE
+        if(colour_selected == 5): input_vector = np.array([colour_range, 0, colour_range]) #PURPLE
 
         #Estimating the BMU coordinates
         bmu_index = my_som.return_BMU_index(input_vector)
@@ -83,7 +85,10 @@ def main():
         print("BMU weights: " + str(bmu_weights*255))
         #print("BMU NEIGHBORHOOD: " + str(bmu_neighborhood_list))
 
-
+    img = np.rint(my_som.return_weights_matrix()*255)
+    plt.axis("off")
+    plt.imshow(img)
+    plt.show()
 
 if __name__ == "__main__":
     main()
