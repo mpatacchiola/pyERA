@@ -35,8 +35,14 @@ If the package was correctly added to your $PYTHONPATH you can use it and import
 
 ```python
 from pyERA.som import Som
-from pyERA.utils import ExponentialDecay
+from pyERA.utils import ExponentialDecay 
 ```
+
+Examples
+---------
+
+1. How to pre-train a Self-Organizing Map to classify six different RGB colours [[code]](examples/ex_som_colours.py)
+
 
 References
 -----------
