@@ -49,74 +49,70 @@ class Som:
 
 
     def return_unit_square_neighborhood(self, row, col, radius):
-        """Return a list with (row, col, distance) of the units around a unit.
+        """Return a list with (row, col, distance) of the units around a unit. This version uses a square as radius, all the element inside the radius are taken as neighborood.
 
-        This version uses a square as radius, all the element inside the radius
-        are taken as neighborood.
         @param row index of the unit
         @param col the column index of the unit
         @param radius the radius of the distance to consider
         """
-         output_list = list()
-         if(radius <= 0): output_list.append((row, col, 0)); return output_list #return empty if radius=0
-         radius = int(radius) #Precaution against float radius
-         row_range_min = row - radius
-         if(row_range_min < 0): row_range_min = 0
-         row_range_max = row + radius
-         if(row_range_max >= self._matrix_size): row_range_max = self._matrix_size - 1
+        output_list = list()
+        if(radius <= 0): output_list.append((row, col, 0)); return output_list #return empty if radius=0
+        radius = int(radius) #Precaution against float radius
+        row_range_min = row - radius
+        if(row_range_min < 0): row_range_min = 0
+        row_range_max = row + radius
+        if(row_range_max >= self._matrix_size): row_range_max = self._matrix_size - 1
 
-         col_range_min = col - radius
-         if(col_range_min < 0): col_range_min = 0
-         col_range_max = col + radius
-         if(col_range_max >= self._matrix_size): col_range_max = self._matrix_size - 1
+        col_range_min = col - radius
+        if(col_range_min < 0): col_range_min = 0
+        col_range_max = col + radius
+        if(col_range_max >= self._matrix_size): col_range_max = self._matrix_size - 1
 
-         for row_iter in range(row_range_min, row_range_max+1):
-             for col_iter in range(col_range_min, col_range_max+1):
-                 #Finding the distances from the BMU
-                 col_distance = np.abs(col - col_iter)
-                 row_distance = np.abs(row - row_iter)
-                 if(col_distance >= row_distance): distance = col_distance
-                 else: distance = row_distance
-                 #Storing (row, col, distance)
-                 output_list.append((row_iter, col_iter, distance))
+        for row_iter in range(row_range_min, row_range_max+1):
+            for col_iter in range(col_range_min, col_range_max+1):
+                #Finding the distances from the BMU
+                col_distance = np.abs(col - col_iter)
+                row_distance = np.abs(row - row_iter)
+                if(col_distance >= row_distance): distance = col_distance
+                else: distance = row_distance
+                #Storing (row, col, distance)
+                output_list.append((row_iter, col_iter, distance))
 
-         return output_list
+        return output_list
 
     def return_unit_round_neighborhood(self, row, col, radius):
-        """Return a list with (row, col, distance) of the units around a unit.
+        """Return a list with (row, col, distance) of the units around a unit. This version uses a circle as radius, all the element inside the radius are taken as neighborood.
 
-        This version uses a circle as radius, all the element inside the radius
-        are taken as neighborood.
         @param row index of the unit
         @param col the column index of the unit
         @param radius the radius of the distance to consider
         """
-         output_list = list()
-         if(radius <= 0): output_list.append((row, col, 0)); return output_list #return empty if radius=0
+        output_list = list()
+        if(radius <= 0): output_list.append((row, col, 0)); return output_list #return empty if radius=0
 
-         #Finding the square around the unit
-         #with wide=radius using the ceil of radius
-         row_range_min = row - int(np.ceil(radius))
-         if(row_range_min < 0): row_range_min = 0
-         row_range_max = row + int(np.ceil(radius))
-         if(row_range_max >= self._matrix_size): row_range_max = self._matrix_size - 1
-         col_range_min = col - int(np.ceil(radius))
-         if(col_range_min < 0): col_range_min = 0
-         col_range_max = col + int(np.ceil(radius))
-         if(col_range_max >= self._matrix_size): col_range_max = self._matrix_size - 1
+        #Finding the square around the unit
+        #with wide=radius using the ceil of radius
+        row_range_min = row - int(np.ceil(radius))
+        if(row_range_min < 0): row_range_min = 0
+        row_range_max = row + int(np.ceil(radius))
+        if(row_range_max >= self._matrix_size): row_range_max = self._matrix_size - 1
+        col_range_min = col - int(np.ceil(radius))
+        if(col_range_min < 0): col_range_min = 0
+        col_range_max = col + int(np.ceil(radius))
+        if(col_range_max >= self._matrix_size): col_range_max = self._matrix_size - 1
 
-         for row_iter in range(row_range_min, row_range_max+1):
-             for col_iter in range(col_range_min, col_range_max+1):
-                 #Finding the distances from the BMU
-                 col_distance = np.abs(col - col_iter)
-                 row_distance = np.abs(row - row_iter)
-                 #Pitagora's Theorem to estimate distance
-                 distance = np.sqrt( np.power(col_distance,2) + np.power(row_distance,2) )
-                 #Store the unit only if the distance is
-                 #less than the radius
-                 if(distance <= radius): output_list.append((row_iter, col_iter, distance))
+        for row_iter in range(row_range_min, row_range_max+1):
+            for col_iter in range(col_range_min, col_range_max+1):
+                #Finding the distances from the BMU
+                col_distance = np.abs(col - col_iter)
+                row_distance = np.abs(row - row_iter)
+                #Pitagora's Theorem to estimate distance
+                distance = np.sqrt( np.power(col_distance,2) + np.power(row_distance,2) )
+                #Store the unit only if the distance is
+                #less than the radius
+                if(distance <= radius): output_list.append((row_iter, col_iter, distance))
 
-         return output_list
+        return output_list
 
     def return_euclidean_distance(self, a, b):
         """Return the Euclidean Distance between two numpy vectors.
