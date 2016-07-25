@@ -9,6 +9,7 @@
 # I used avconv to convert the images to a video: avconv -f image2 -i %d.png -r 12 -s 800x600 output.avi
 # The name of the images must be in order, if there is one or more missing names (ex: 18.png, 25.png) 
 # an empty video will be created.
+# At the end of the example the network is saved inside the file: examples/som_colours.npz
 
 
 #Add the pyERA package
@@ -28,17 +29,17 @@ from pyERA.utils import LinearDecay
 def main():
 
     #Set to True if you want to save the SOM images inside a folder.
-    SAVE_IMAGE = True
+    SAVE_IMAGE = False
 
     #Init the SOM
     som_size = 64
     my_som = Som(matrix_size=64, input_size=3, low=0, high=1, round_values=False)
-
+    
     #Init the parameters
     tot_epoch = 1500
     my_learning_rate = ExponentialDecay(starter_value=0.5, decay_step=50, decay_rate=0.9, staircase=True)
-    #my_radius = ExponentialDecay(starter_value=32, decay_step=80, decay_rate=0.85, staircase=True)
-    my_radius = LinearDecay(starter_value=30, decay_rate=0.02, allow_negative=False)
+    my_radius = ExponentialDecay(starter_value=32, decay_step=80, decay_rate=0.85, staircase=True)
+    #my_radius = LinearDecay(starter_value=30, decay_rate=0.02, allow_negative=False)
 
     #Starting the Learning
     for epoch in range(1, tot_epoch):
@@ -85,6 +86,12 @@ def main():
         print("BMU index: " + str(bmu_index))
         print("BMU weights: " + str(bmu_weights*255))
         #print("BMU NEIGHBORHOOD: " + str(bmu_neighborhood_list))
+
+
+    #Saving the network for a later use
+    file_name = "./examples/som_colours.npz"
+    print("Saving the network in: " + str(file_name))
+    my_som.save(path="./examples/", name="some_colours")
 
     img = np.rint(my_som.return_weights_matrix()*255)
     plt.axis("off")
