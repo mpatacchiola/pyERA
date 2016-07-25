@@ -181,9 +181,29 @@ class Som:
                 self._weights_matrix[row, col, :] = self._weights_matrix[row, col, :] + learning_rate * (input_vector - self._weights_matrix[row, col, :])
 
 
+    def save(self, path="./", name="som", compression=True):
+        """It saves the SOM parameters in a compressed file.
+
+        @param path
+        @param name
+        """
+        outfile = path + name
+        if (compression==True): np.savez_compressed(outfile, self._weights_matrix)
+        else: np.savez(outfile, self._weights_matrix)
 
 
+    def load(self, file_path):
+        """It loads the SOM parameters from a file.
 
+        @param file_path
+        """
+        npzfile = np.load(file_path)
+        self._weights_matrix = npzfile['arr_0']
+
+        if(len(self._weights_matrix.shape) != 3): raise ValueError('som: error loading the network, the matrix shape is != 3')
+
+        self._matrix_size = self._weights_matrix.shape[0]
+        self._input_size = self._weights_matrix.shape[2]
 
 
 
