@@ -62,6 +62,8 @@ Examples
 <img src="examples/ex_som_colours.png">
 </p>
 
+2. How to save and load a Self-Organizing Map [[code]](examples/ex_som_save_load.py)
+
 
 References
 -----------
