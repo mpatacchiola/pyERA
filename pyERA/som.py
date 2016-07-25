@@ -153,6 +153,18 @@ class Som:
         return self._weights_matrix[row, col, :]
 
 
+    def return_output_matrix(self, input_vector):
+        """Return a 2D matrix of zeros where only the BMU unit is equal to 1.
+
+        @param input_vector the vector to use as input.
+        """
+        index = self.return_BMU_index(input_vector)
+        output_matrix = np.zeros((self._matrix_size,self._matrix_size))
+        output_matrix[index[0],index[1]] = 1.0
+        return output_matrix
+
+
+
     def training_single_step(self, input_vector, units_list, learning_rate, radius, weighted_distance=False):
         """A single step of the training procedure.
 
