@@ -86,6 +86,25 @@ class HebbianConnection:
             delta_weight = (learning_rate * input_activation[it.multi_index[0]] * output_activation[it.multi_index[1]]) - \
                            (learning_rate * output_activation[it.multi_index[1]] * output_activation[it.multi_index[1]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]] )
             self._weights_matrix[it.multi_index[0], it.multi_index[1]] += delta_weight
+            it.iternext()
+
+    def return_output_activation_matrix(self, input_activation_matrix):
+        """It returns the activation matrix of the output network
+
+        @param input_activation_matrix a vector or a bidimensional matrix representing the activation of the input units
+        """
+        input_activation_vector = input_activation_matrix.flatten()
+        output_activation_matrix = np.zeros(self._output_shape)
+        output_activation_vector = output_activaton_matrix.flatten()
+
+        it = np.nditer(self._weights_matrix, flags=['multi_index'])
+        while not it.finished:
+            output_activation_vector[it.multi_index[1]] +=  input_activation_vector[it.multi_index[0]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]]
+            it.iternext()
+
+        output_activation_matrix = output_activation_vector.reshape(self._output_shape)
+        return output_activation_matrix
+
 
 
 
