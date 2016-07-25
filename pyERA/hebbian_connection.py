@@ -21,24 +21,45 @@ class HebbianConnection:
         self._weights_matrix = np.zeros((rows * cols))
 
 
-    def learning_hebb_rule(self, input_activations, output_activations):
+    def learning_hebb_rule(self, input_activations, output_activations, learning_rate):
         """Single step learning using the Hebbian update rule.
 
         The standard Hebbian rule: If two neurons on either side of a synapse (connection) are activated simultaneously, 
         then the strength of that synapse is selectively increased.
         @param input_activations a vector or a bidimensional matrix representing the activation of the input units
         @param output_activations a vector or a bidimensional matrix representing the activation of the output units
+        @param learning_rate it is costant that defines the learning step
         """
+        input_activation = input_activation.flatten()
+        output_activation = output_activation.flatten()
+
+        it = np.nditer(self._weights_matrix, flags=['multi_index'])
+        while not it.finished:
+            #print "%d <%s>" % (it[0], it.multi_index)
+            #Applying the Hebbian Rule:
+            delta_weight = learning_rate * input_activation[it.multi_index[0]] * output_activation[it.multi_index[1]]
+            self._weights_matrix[it.multi_index[0], it.multi_index[1]] += delta_weight
+            it.iternext()
 
 
-    def learning_oja_rule(self, input_activations, output_activations):
+    def learning_oja_rule(self, input_activations, output_activations, learning_rate):
         """Single step learning using the Oja's update rule.
 
         The Oja's rule normalizes the weights between 0 and 1, trying  to stop the weights increasing indefinitely
         @param input_activations a vector or a bidimensional matrix representing the activation of the input units
         @param output_activations a vector or a bidimensional matrix representing the activation of the output units
+        @param learning_rate it is costant that defines the learning step
         """
-        print("")
+        input_activation = input_activation.flatten()
+        output_activation = output_activation.flatten()
+
+        it = np.nditer(self._weights_matrix, flags=['multi_index'])
+        while not it.finished:
+            #print "%d <%s>" % (it[0], it.multi_index)
+            #Applying the Oja's Rule:
+            delta_weight = (learning_rate * input_activation[it.multi_index[0]] * output_activation[it.multi_index[1]]) - \
+                           (learning_rate * output_activation[it.multi_index[1]] * output_activation[it.multi_index[1]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]] )
+            self._weights_matrix[it.multi_index[0], it.multi_index[1]] += delta_weight
 
 
 
