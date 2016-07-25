@@ -19,10 +19,10 @@ class HebbianConnection:
         #The weight matrix is created from the shape of the input/output matrices
         rows = self._input_shape[0] * self._input_shape[1]
         cols = self._output_shape[0] * self._output_shape[1]
-        self._weights_matrix = np.zeros((rows * cols))
+        self._weights_matrix = np.zeros((rows, cols))
 
 
-    def learning_hebb_rule(self, input_activations, output_activations, learning_rate):
+    def learning_hebb_rule(self, input_activation_matrix, output_activation_matrix, learning_rate):
         """Single step learning using the Hebbian update rule.
 
         The standard Hebbian rule: If two neurons on either side of a synapse (connection) are activated simultaneously, 
@@ -33,14 +33,14 @@ class HebbianConnection:
         """
         if(learning_rate <=0): raise ValueError('hebbian_connection: error the learning rate used for the hebbian rule must be >0')
 
-        input_activation = input_activation.flatten()
-        output_activation = output_activation.flatten()
+        input_activation_vector = input_activation_matrix.flatten()
+        output_activation_vector = output_activation_matrix.flatten()
 
         it = np.nditer(self._weights_matrix, flags=['multi_index'])
         while not it.finished:
             #print "%d <%s>" % (it[0], it.multi_index)
             #Applying the Hebbian Rule:
-            delta_weight = learning_rate * input_activation[it.multi_index[0]] * output_activation[it.multi_index[1]]
+            delta_weight = learning_rate * input_activation_vector[it.multi_index[0]] * output_activation_vector[it.multi_index[1]]
             self._weights_matrix[it.multi_index[0], it.multi_index[1]] += delta_weight
             it.iternext()
 
@@ -95,7 +95,7 @@ class HebbianConnection:
         """
         input_activation_vector = input_activation_matrix.flatten()
         output_activation_matrix = np.zeros(self._output_shape)
-        output_activation_vector = output_activaton_matrix.flatten()
+        output_activation_vector = output_activation_matrix.flatten()
 
         it = np.nditer(self._weights_matrix, flags=['multi_index'])
         while not it.finished:
