@@ -61,8 +61,15 @@ class LinearDecay:
         else: return decayed_value
 
 
+class Normalizer:
 
+    def softmax(x):
+        """Compute softmax values for each sets of scores in the input vector.
 
+        @param x is the input vector/matrix to normalize
+        """
+        e_x = np.exp(x - np.max(x))
+        return e_x / e_x.sum(axis=0)
 
 
 
