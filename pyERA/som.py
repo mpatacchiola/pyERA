@@ -153,7 +153,7 @@ class Som:
         return self._weights_matrix[row, col, :]
 
 
-    def return_output_matrix(self, input_vector):
+    def return_activation_matrix(self, input_vector):
         """Return a 2D matrix of zeros where only the BMU unit is equal to 1.
 
         @param input_vector the vector to use as input.
