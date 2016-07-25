@@ -114,11 +114,19 @@ class Som:
 
         return output_list
 
+
     def return_euclidean_distance(self, a, b):
         """Return the Euclidean Distance between two numpy vectors.
 
         """
         return np.linalg.norm(a-b)
+
+
+    def return_cosine_similarity(self, a, b):
+        """Return the Cosine Similarity between two numpy vectors.
+
+        """
+        return np.dot(a,b.T)/np.linalg.norm(a)/np.linalg.norm(b)
 
 
     def return_BMU_index(self, input_vector):
@@ -163,6 +171,33 @@ class Som:
         output_matrix[index[0],index[1]] = 1.0
         return output_matrix
 
+    def return_distance_matrix(self, input_vector):
+        """Return the euclidean-distance matrix between the input vector and the SOM weights.
+
+        @param input_vector the vector to use for the comparison.
+        """
+        output_matrix = np.zeros((self._matrix_size, self._matrix_size))
+        it = np.nditer(output_matrix, flags=['multi_index'])
+        while not it.finished:
+            #print "%d <%s>" % (it[0], it.multi_index),
+            dist = self.return_euclidean_distance(input_vector, self._weights_matrix[it.multi_index[0], it.multi_index[1], :])
+            output_matrix[it.multi_index[0], it.multi_index[1]] = dist
+            it.iternext()
+        return output_matrix
+
+    def return_similarity_matrix(self, input_vector):
+        """Return the cosine-similarity matrix between the input vector and the SOM weights.
+
+        @param input_vector the vector to use for the comparison.
+        """
+        output_matrix = np.zeros((self._matrix_size, self._matrix_size))
+        it = np.nditer(output_matrix, flags=['multi_index'])
+        while not it.finished:
+            #print "%d <%s>" % (it[0], it.multi_index),
+            sim = self.return_cosine_similarity(input_vector, self._weights_matrix[it.multi_index[0], it.multi_index[1], :])
+            output_matrix[it.multi_index[0], it.multi_index[1]] = sim
+            it.iternext()
+        return output_matrix
 
 
     def training_single_step(self, input_vector, units_list, learning_rate, radius, weighted_distance=False):
