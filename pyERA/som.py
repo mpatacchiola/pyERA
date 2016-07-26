@@ -126,8 +126,8 @@ class Som:
         """Return the Cosine Similarity between two numpy vectors.
 
         """
-        return np.dot(a,b.T)/np.linalg.norm(a)/np.linalg.norm(b)
-
+        #return np.dot(a,b.T)/(np.linalg.norm(a)*np.linalg.norm(b))
+        return np.dot(a,b.T) / (np.sqrt(np.dot(a,a.T)) * np.sqrt(np.dot(b,b.T))) 
 
     def return_BMU_index(self, input_vector):
         """Return the coordinates of the BMU.
@@ -183,6 +183,24 @@ class Som:
             dist = self.return_euclidean_distance(input_vector, self._weights_matrix[it.multi_index[0], it.multi_index[1], :])
             output_matrix[it.multi_index[0], it.multi_index[1]] = dist
             it.iternext()
+        return output_matrix
+
+    def return_normalized_distance_matrix(self, input_vector):
+        """Return the min-max normalized euclidean-distance matrix between the input vector and the SOM weights.
+
+        @param input_vector the vector to use for the comparison.
+        """
+        output_matrix = np.zeros((self._matrix_size, self._matrix_size))
+        it = np.nditer(output_matrix, flags=['multi_index'])
+        while not it.finished:
+            #print "%d <%s>" % (it[0], it.multi_index),
+            dist = self.return_euclidean_distance(input_vector, self._weights_matrix[it.multi_index[0], it.multi_index[1], :])
+            output_matrix[it.multi_index[0], it.multi_index[1]] = dist
+            it.iternext()
+        #min-max normalization
+        max_value = np.amax(output_matrix)
+        min_value = np.amin(output_matrix)
+        output_matrix = (output_matrix - min_value) / (max_value - min_value)
         return output_matrix
 
     def return_similarity_matrix(self, input_vector):
