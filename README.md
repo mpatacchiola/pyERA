@@ -64,7 +64,11 @@ Examples
 <img src="examples/ex_som_colours.png">
 </p>
 
+2. How to estimate the activation values of a pre-trained Self-Organizing Map [[code]](examples/ex_som_activation.py)
 
+<p align="center">
+<img src="examples/ex_som_activation.png">
+</p>
 
 
 References
