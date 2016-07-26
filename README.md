@@ -56,13 +56,15 @@ from pyERA.utils import ExponentialDecay
 Examples
 ---------
 
-1. How to pre-train a Self-Organizing Map to classify six different RGB colours [[code]](examples/ex_som_colours.py) [[video]](https://www.youtube.com/watch?v=3UOnOpUeZwk)
+1. How to save and load a Self-Organizing Map [[code]](examples/ex_som_save_load.py)
+
+2. How to pre-train a Self-Organizing Map to classify six different RGB colours [[code]](examples/ex_som_colours.py) [[video]](https://www.youtube.com/watch?v=3UOnOpUeZwk)
 
 <p align="center">
 <img src="examples/ex_som_colours.png">
 </p>
 
-2. How to save and load a Self-Organizing Map [[code]](examples/ex_som_save_load.py)
+
 
 
 References
