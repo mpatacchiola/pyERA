@@ -64,7 +64,7 @@ Examples
 <img src="examples/ex_som_colours.png">
 </p>
 
-2. How to estimate the activation values of a pre-trained Self-Organizing Map [[code]](examples/ex_som_activation.py)
+3. How to visualize the Euclidean distance between an input vector and the weights of a Self-Organizing Map [[code]](examples/ex_som_activation.py) [[video]](https://www.youtube.com/watch?v=HYGxx-clLRo)
 
 <p align="center">
 <img src="examples/ex_som_activation.png">
@@ -75,4 +75,6 @@ References
 -----------
 
 Morse, A. F., De Greeff, J., Belpeame, T., & Cangelosi, A. (2010). Epigenetic robotics architecture (ERA). IEEE Transactions on Autonomous Mental Development, 2(4), 325-339. [[pdf]](doc/era_epigenetic_robotics_architecture_Morse_et_al_2010.pdf)
+
+
 
