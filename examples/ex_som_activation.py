@@ -151,15 +151,6 @@ def main():
     print("Saving in: ./purple.png")
     plt.savefig("./purple.png", dpi=None, facecolor='black')
 
-    #Saving the network for a later use
-    #file_name = "./examples/som_colours.npz"
-    #print("Saving the network in: " + str(file_name))
-    #my_som.save(path="./examples/", name="some_colours")
-
-    #img = np.rint(my_som.return_weights_matrix()*255)
-    #plt.axis("off")
-    #plt.imshow(img)
-    #plt.show()
 
 if __name__ == "__main__":
     main()
