@@ -188,6 +188,7 @@ class Som:
     def return_normalized_distance_matrix(self, input_vector):
         """Return the min-max normalized euclidean-distance matrix between the input vector and the SOM weights.
 
+        A value of 0.0 means that the input/weights are equal.
         @param input_vector the vector to use for the comparison.
         """
         output_matrix = np.zeros((self._matrix_size, self._matrix_size))
@@ -198,12 +199,31 @@ class Som:
             output_matrix[it.multi_index[0], it.multi_index[1]] = dist
             it.iternext()
         #min-max normalization
-        max_value = np.amax(output_matrix)
-        min_value = np.amin(output_matrix)
+        max_value = np.nanmax(output_matrix)
+        min_value = np.nanmin(output_matrix)
         output_matrix = (output_matrix - min_value) / (max_value - min_value)
         return output_matrix
 
     def return_similarity_matrix(self, input_vector):
+        """Return a similarity matrix where a value is 1.0 if the distance input/weight is zero.
+
+        @param input_vector the vector to use for the comparison.
+        """
+        output_matrix = np.zeros((self._matrix_size, self._matrix_size))
+        it = np.nditer(output_matrix, flags=['multi_index'])
+        while not it.finished:
+            #print "%d <%s>" % (it[0], it.multi_index),
+            dist = self.return_euclidean_distance(input_vector, self._weights_matrix[it.multi_index[0], it.multi_index[1], :])
+            output_matrix[it.multi_index[0], it.multi_index[1]] = dist
+            it.iternext()
+        #min-max normalization
+        max_value = np.nanmax(output_matrix)
+        min_value = np.nanmin(output_matrix)
+        output_matrix = (output_matrix - min_value) / (max_value - min_value)
+        output_matrix = 1.0 - output_matrix
+        return output_matrix
+
+    def return_cosine_similarity_matrix(self, input_vector):
         """Return the cosine-similarity matrix between the input vector and the SOM weights.
 
         @param input_vector the vector to use for the comparison.
@@ -227,6 +247,7 @@ class Som:
         @param learning_rate
         @param radius it is used to update the weights based on distance.
         """
+        if(type(input_vector).__module__ != np.__name__): raise ValueError('som: the input vector must be a numpy array.')
         for unit in units_list:
             row = unit[0]
             col = unit[1]
@@ -245,6 +266,39 @@ class Som:
                 # unit weights
                 self._weights_matrix[row, col, :] = self._weights_matrix[row, col, :] + learning_rate * (input_vector - self._weights_matrix[row, col, :])
 
+    def training_batch_step(self, input_vector_list, learning_rate, radius, weighted_distance=False):
+        """A batch step of the training procedure.
+
+        It updates the weights using the Kohoen learning rule.
+        @param input_vector_list a list containing the vector to use for the comparison.
+        @param units_list the units to modify (the BMU and neighborhood)
+        @param learning_rate
+        @param radius it is used to update the weights based on distance.
+        """
+
+        for input_vector in input_vector_list:
+               #Getting the BMU index
+               bmu_index = self.return_BMU_index(input_vector)
+               #Getting the BMU neighborhood
+               units_list = self.return_unit_round_neighborhood(bmu_index[0], bmu_index[1], radius=radius) 
+
+               for unit in units_list:
+                   row = unit[0]
+                   col = unit[1]
+                   dist = unit[2]
+
+                   #The distance_rate take into account the distance of the unit
+                   #from the BMU and permits regulating the updating of the weights
+                   #with more decision for units that are close to the BMU.
+                   if(weighted_distance == True):
+                       distance_rate = np.exp(- np.power(dist,2)/(2*np.power(radius,2)))
+                       self._weights_matrix[row, col, :] = self._weights_matrix[row, col, :] + distance_rate * learning_rate * (input_vector - self._weights_matrix[row, col, :])
+                   else:
+                       #Update the weights of the neighborood units
+                       #The new weight is equal to the old one plus a fracion
+                       # of the difference between the input_vector and the
+                       # unit weights
+                       self._weights_matrix[row, col, :] = self._weights_matrix[row, col, :] + learning_rate * (input_vector - self._weights_matrix[row, col, :])
 
     def save(self, path="./", name="som", compression=True):
         """It saves the SOM parameters in a compressed file.
