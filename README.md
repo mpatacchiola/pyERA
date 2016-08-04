@@ -58,6 +58,12 @@ Examples
 
 - How to save and load a Self-Organizing Map [[code]](examples/ex_som_save_load.py)
 
+- How to train a Self-Organizing Map to classify pixel locations [[code]](examples/ex_som_marilyn_monroe.py) [[video]](https://www.youtube.com/watch?v=ipH_Df2MbPI)
+
+<p align="center">
+<img src="examples/ex_som_marilyn_monroe.png">
+</p>
+
 - How to pre-train a Self-Organizing Map to classify six different RGB colours [[code]](examples/ex_som_colours.py) [[video]](https://www.youtube.com/watch?v=3UOnOpUeZwk)
 
 <p align="center">
