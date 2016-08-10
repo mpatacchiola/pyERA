@@ -17,6 +17,8 @@ class HebbianConnection:
         self._output_shape = output_shape
 
         #The weight matrix is created from the shape of the input/output matrices
+        #The number of rows in weights_matris is equal to the number of elements (rows*cols) in input_matrix
+        #The number of cols in weights_matrix is equal to the number of elements (rows*cols) in output_matrix
         rows = self._input_shape[0] * self._input_shape[1]
         cols = self._output_shape[0] * self._output_shape[1]
         self._weights_matrix = np.zeros((rows, cols))
@@ -88,8 +90,8 @@ class HebbianConnection:
             self._weights_matrix[it.multi_index[0], it.multi_index[1]] += delta_weight
             it.iternext()
 
-    def return_output_activation_matrix(self, input_activation_matrix):
-        """It returns the activation matrix of the output network
+    def compute_forward_activation(self, input_activation_matrix):
+        """It returns the activation matrix of the output layer
 
         @param input_activation_matrix a vector or a bidimensional matrix representing the activation of the input units
         """
@@ -97,6 +99,8 @@ class HebbianConnection:
         output_activation_matrix = np.zeros(self._output_shape)
         output_activation_vector = output_activation_matrix.flatten()
 
+        #Iterates the elements in weights_matrix and use the row index for
+        #accessing the element of the flatten input matrix.
         it = np.nditer(self._weights_matrix, flags=['multi_index'])
         while not it.finished:
             output_activation_vector[it.multi_index[1]] +=  input_activation_vector[it.multi_index[0]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]]
@@ -106,6 +110,24 @@ class HebbianConnection:
         return output_activation_matrix
 
 
+    def compute_backward_activation(self, output_activation_matrix):
+        """It returns the activation matrix of the input layer
+
+        @param output_activation_matrix a vector or a bidimensional matrix representing the activation of the output units
+        """
+        output_activation_vector = output_activation_matrix.flatten()
+        input_activation_matrix = np.zeros(self._input_shape)
+        input_activation_vector = input_activation_matrix.flatten()
+
+        #Iterates the elements in weights_matrix and use the col index for
+        #accessing the element of the flatten output matrix.
+        it = np.nditer(self._weights_matrix, flags=['multi_index'])
+        while not it.finished:
+            input_activation_vector[it.multi_index[0]] +=  output_activation_vector[it.multi_index[1]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]]
+            it.iternext()
+
+        input_activation_matrix = input_activation_vector.reshape(self._input_shape)
+        return input_activation_matrix
 
 
 
