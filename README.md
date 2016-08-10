@@ -25,7 +25,7 @@ The Epigenetic Robotic Architecture (ERA) is a hybrid behavior-based robotics an
 structured association of multiple self-organizing maps. Each SOM receives a subset of the input available to that unit and is typically partially prestabilized using random input distributed across the appropriate ranges for those inputs. In the simplest case, the ERA architecture comprises of multiple SOMs, each receiving input from a different sensory modality, and each with a single winning unit. Each of these winning units is then associated to the winning unit of a special “hub” SOM using a bidirectional connection weighted with positive Hebbian learning.
 
 <p align="center">
-<img src="doc/era_architecture.png">
+<img src="doc/images/era_architecture.png">
 </p>
 
 In some cases, one of the existing input SOMs can be selected as the hub but more often the hub SOM will provide pattern recognition over the activity of the other SOMs in the ERA unit. Having established the winning units in the various SOMs via a forward pass, the activity within the ERA unit then spreads via the bidirectional Hebbian connections, allowing the presence of features or concepts in one map to prime features or concepts in the other maps/conceptual spaces. For more information about the architecture see the reference section at the bottom of this page.
@@ -46,7 +46,11 @@ To install the package you have to run the setup.py script:
 python setup.py install
 ```
 
-Done! pyERA is installed and ready to be used. You can now give a look to the examples folder...
+Done! pyERA is installed and ready to be used. You can now give a look to the examples folder. The examples work without any intervention on the code. The only thing you need to do is to open a new terminal in the examples folder:
+
+```shell
+cd pyERA/examples/
+```
 
 Examples
 ---------
@@ -56,19 +60,19 @@ Examples
 - How to train a Self-Organizing Map to classify pixel locations [[code]](examples/ex_som_marilyn_monroe.py) [[video]](https://www.youtube.com/watch?v=ipH_Df2MbPI)
 
 <p align="center">
-<img src="examples/ex_som_marilyn_monroe.png">
+<img src="doc/images/ex_som_marilyn_monroe.png">
 </p>
 
 - How to pre-train a Self-Organizing Map to classify six different RGB colours [[code]](examples/ex_som_colours.py) [[video]](https://www.youtube.com/watch?v=3UOnOpUeZwk)
 
 <p align="center">
-<img src="examples/ex_som_colours.png">
+<img src="doc/images/ex_som_colours.png">
 </p>
 
 - How to visualize the Euclidean distance between an input vector and the weights of a Self-Organizing Map [[code]](examples/ex_som_activation.py) [[video]](https://www.youtube.com/watch?v=HYGxx-clLRo)
 
 <p align="center">
-<img src="examples/ex_som_activation.png">
+<img src="doc/images/ex_som_activation.png">
 </p>
 
 
