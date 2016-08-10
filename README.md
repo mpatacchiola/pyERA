@@ -40,17 +40,19 @@ Download the repository from [[here]](https://github.com/mpatacchiola/pyERA/arch
 git clone https://github.com/mpatacchiola/pyERA.git
 ```
 
-To install the package you have to run the setup.py script:
+To install the package you have to run the setup.py script (it may require root privileges):
 
 ```shell
 python setup.py install
 ```
 
-Done! pyERA is installed and ready to be used. You can now give a look to the examples folder. The examples work without any intervention on the code. The only thing you need to do is to open a new terminal in the examples folder:
+Done! pyERA is installed and ready to be used. Give a look to the examples folder. The examples work without any intervention on the code. The only thing you need to do is to open a new terminal and set the examples folder as current directory:
 
 ```shell
 cd pyERA/examples/
 ```
+
+The examples require matplotlib (for the visualization of the results).
 
 Examples
 ---------
