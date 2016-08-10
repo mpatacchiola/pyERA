@@ -11,16 +11,28 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import os
 
 #It requires the pyERA library
 from pyERA.som import Som
 
 def main():
 
+    #Set to True if you want to save the SOM images inside a folder.
+    SAVE_IMAGE = True
+    output_path = "./output/" #Change this path to save in a different forlder
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    #Check if the input file exists
+    if(os.path.isfile("./output/some_colours.npz") == False): 
+        raise ValueError('Error: I cannot find the file som_colours.npz in the output folder. Run the example ex_som_colours.py to generate it.')
+ 
+
     #Loading the pretrained SOM
     som_size = 512
     my_som = Som(matrix_size=som_size, input_size=3, low=0, high=1, round_values=False)
-    my_som.load("./some_colours_512_2.npz")
+    my_som.load("./output/some_colours.npz")
     print("")
 
     #Saving the image of the SOM weights
@@ -28,8 +40,8 @@ def main():
     img = np.rint(my_som.return_weights_matrix()*255)
     plt.axis("off")
     plt.imshow(img)
-    print("Saving in: ./original.png")
-    plt.savefig("./original.png", dpi=None, facecolor='black')
+    print("Saving in: " + output_path + "original.png")
+    plt.savefig(output_path + "original.png", dpi=None, facecolor='black')
 
     #Variables
     draw_range = 5 #The colour range of the re square
@@ -55,8 +67,8 @@ def main():
     #Create a matplotlib graph and save the image
     plt.axis("off")
     plt.imshow(img)
-    print("Saving in: ./red.png")
-    plt.savefig("./red.png", dpi=None, facecolor='black')
+    print("Saving in: " + output_path + "red.png")
+    plt.savefig(output_path + "red.png", dpi=None, facecolor='black')
 
     #Saving the activation units for GREEN
     print("")
@@ -72,8 +84,8 @@ def main():
     img[bmu_index[0]-draw_range:bmu_index[0]+draw_range, bmu_index[1]-draw_range:bmu_index[1]+draw_range, 2] = 0
     plt.axis("off")
     plt.imshow(img)
-    print("Saving in: ./gree.png")
-    plt.savefig("./green.png", dpi=None, facecolor='black')
+    print("Saving in: " + output_path + "gree.png")
+    plt.savefig(output_path + "green.png", dpi=None, facecolor='black')
 
     #Saving the activation units for BLUE
     print("")
@@ -89,8 +101,8 @@ def main():
     img[bmu_index[0]-draw_range:bmu_index[0]+draw_range, bmu_index[1]-draw_range:bmu_index[1]+draw_range, 2] = 0
     plt.axis("off")
     plt.imshow(img)
-    print("Saving in: ./blue.png")
-    plt.savefig("./blue.png", dpi=None, facecolor='black')
+    print("Saving in: " + output_path + "blue.png")
+    plt.savefig(output_path + "blue.png", dpi=None, facecolor='black')
 
     #Saving the activation units for YELLOW
     print("")
@@ -106,8 +118,8 @@ def main():
     img[bmu_index[0]-draw_range:bmu_index[0]+draw_range, bmu_index[1]-draw_range:bmu_index[1]+draw_range, 2] = 0
     plt.axis("off")
     plt.imshow(img)
-    print("Saving in: ./yellow.png")
-    plt.savefig("./yellow.png", dpi=None, facecolor='black')
+    print("Saving in: " + output_path + "yellow.png")
+    plt.savefig(output_path + "yellow.png", dpi=None, facecolor='black')
 
     #Saving the activation units for LIGHT-BLUE
     print("")
@@ -123,8 +135,8 @@ def main():
     img[bmu_index[0]-draw_range:bmu_index[0]+draw_range, bmu_index[1]-draw_range:bmu_index[1]+draw_range, 2] = 0
     plt.axis("off")
     plt.imshow(img)
-    print("Saving in: ./light-blue.png")
-    plt.savefig("./light-blue.png", dpi=None, facecolor='black')
+    print("Saving in: " + output_path + "light-blue.png")
+    plt.savefig(output_path + "light-blue.png", dpi=None, facecolor='black')
 
     #Saving the activation units for PURPLE
     print("")
@@ -140,8 +152,8 @@ def main():
     img[bmu_index[0]-draw_range:bmu_index[0]+draw_range, bmu_index[1]-draw_range:bmu_index[1]+draw_range, 2] = 0
     plt.axis("off")
     plt.imshow(img)
-    print("Saving in: ./purple.png")
-    plt.savefig("./purple.png", dpi=None, facecolor='black')
+    print("Saving in: " + output_path + "purple.png")
+    plt.savefig(output_path + "purple.png", dpi=None, facecolor='black')
 
 
 if __name__ == "__main__":

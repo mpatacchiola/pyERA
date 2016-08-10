@@ -31,7 +31,7 @@ def main():
         os.makedirs(output_path)
 
     #Init the SOM
-    som_size = 32
+    som_size = 512
     my_som = Som(matrix_size=som_size, input_size=3, low=0, high=1, round_values=False)
     
     #Init the parameters
