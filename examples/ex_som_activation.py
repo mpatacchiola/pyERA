@@ -8,11 +8,6 @@
 # distances between the input and the weights.
 #
 
-
-#Add the pyERA package
-import sys
-sys.path.insert(0, "../pyERA")
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -22,11 +17,10 @@ from pyERA.som import Som
 
 def main():
 
-
     #Loading the pretrained SOM
     som_size = 512
     my_som = Som(matrix_size=som_size, input_size=3, low=0, high=1, round_values=False)
-    my_som.load("./examples/some_colours_512_2.npz")
+    my_som.load("./some_colours_512_2.npz")
     print("")
 
     #Saving the image of the SOM weights
