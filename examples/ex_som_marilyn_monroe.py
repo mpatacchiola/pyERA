@@ -9,16 +9,9 @@
 # The SOM adapt its weights to describe that random distribution.
 #
 
-
-#Add the pyERA package
-import sys
-sys.path.insert(0, "../pyERA")
-
 import numpy as np
 import matplotlib.pyplot as plt
-#import matplotlib.image as mpim
 from PIL import Image
-#import cv2
 
 #It requires the pyERA library
 from pyERA.som import Som
@@ -29,8 +22,8 @@ def main():
 
     #Opening the image in greyscale
     img_size = 512
-    img_original = Image.open('./examples/original.jpg')
-    img = Image.open('./examples/filtered.jpg').convert("L") #greyscale
+    img_original = Image.open('./original.jpg')
+    img = Image.open('./filtered.jpg').convert("L") #greyscale
     img_matrix = np.asarray(img, dtype=np.float32)
 
     #Normalising the pixel values to sum up to 1.0
@@ -94,7 +87,7 @@ def main():
             b=fig.add_subplot(1,2,2)
             imgplot = plt.imshow(som_img)
             plt.axis("off")
-            plt.savefig("examples/images_c/" + str(epoch) + ".png", dpi=200, facecolor='black')
+            plt.savefig("./images/" + str(epoch) + ".png", dpi=200, facecolor='black')
             plt.close('all')
 
         #Learning step (batch learning)
@@ -105,8 +98,13 @@ def main():
         print("Learning Rate: " + str(learning_rate))
         print("Radius: " + str(radius))
         print("Sorted index: " + str(sorted_index_list))
-   
 
+
+    #Saving the network
+    file_name = "./som_marilyn.npz"
+    print("Saving the network in: " + str(file_name))
+    my_som.save(path="./", name="some_marilyn")
+   
 
 if __name__ == "__main__":
     main()
