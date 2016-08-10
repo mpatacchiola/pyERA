@@ -5,11 +5,6 @@
 # This code shows how to store and load a SOM.
 #
 
-
-#Add the pyERA package
-import sys
-sys.path.insert(0, "../pyERA")
-
 import numpy as np
 
 #It requires the pyERA library
