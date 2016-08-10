@@ -12,6 +12,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+import os
 
 #It requires the pyERA library
 from pyERA.som import Som
@@ -20,10 +21,16 @@ from pyERA.utils import ExponentialDecay
 
 def main():
 
+    #Set to True if you want to save the SOM images inside a folder.
+    SAVE_IMAGE = True
+    output_path = "./outputo/" #Change this path to save in a different forlder
+    if not os.path.exists(output_path):
+        os.makedirs(output_path) 
+
     #Opening the image in greyscale
     img_size = 512
-    img_original = Image.open('./original.jpg')
-    img = Image.open('./filtered.jpg').convert("L") #greyscale
+    img_original = Image.open('./input/marilyn_original.jpg')
+    img = Image.open('./input/marilyn_filtered.jpg').convert("L") #greyscale
     img_matrix = np.asarray(img, dtype=np.float32)
 
     #Normalising the pixel values to sum up to 1.0
@@ -80,15 +87,16 @@ def main():
                     som_img[x, y, 2] = 0
 
             #Saving the image
-            fig = plt.figure()
-            a=fig.add_subplot(1,2,1)
-            imgplot = plt.imshow(img_original)
-            plt.axis("off")
-            b=fig.add_subplot(1,2,2)
-            imgplot = plt.imshow(som_img)
-            plt.axis("off")
-            plt.savefig("./images/" + str(epoch) + ".png", dpi=200, facecolor='black')
-            plt.close('all')
+            if(SAVE_IMAGE == True):
+                fig = plt.figure()
+                a=fig.add_subplot(1,2,1)
+                imgplot = plt.imshow(img_original)
+                plt.axis("off")
+                b=fig.add_subplot(1,2,2)
+                imgplot = plt.imshow(som_img)
+                plt.axis("off")
+                plt.savefig(output_path + str(epoch) + ".png", dpi=200, facecolor='black')
+                plt.close('all')
 
         #Learning step (batch learning)
         my_som.training_batch_step(input_vector_list, learning_rate=learning_rate, radius=radius, weighted_distance=True)
