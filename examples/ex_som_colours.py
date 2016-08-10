@@ -6,7 +6,7 @@
 # For each epoch it is possible to save an image which represents the weights of the SOM.
 # Each weight is a 3D numpy array with values ranging between 0 and 1. The values can be converted
 # to RGB in the range [0,255] and then displayed as colours.
-# I used avconv to convert the images to a video: avconv -f image2 -i %d.png -r 12 -s 800x600 output.avi
+# You can use avconv to convert the images to a video: avconv -f image2 -i %d.png -r 12 -s 800x600 output.avi
 # The name of the images must be in order, if there is one or more missing names (ex: 18.png, 25.png) 
 # an empty video will be created.
 # At the end of the example the network is saved inside the file: examples/som_colours.npz
@@ -38,7 +38,6 @@ def main():
     tot_epoch = 1500
     my_learning_rate = ExponentialDecay(starter_value=0.4, decay_step=50, decay_rate=0.9, staircase=True)
     my_radius = ExponentialDecay(starter_value=np.rint(som_size/3), decay_step=80, decay_rate=0.90, staircase=True)
-    #my_radius = LinearDecay(starter_value=30, decay_rate=0.02, allow_negative=False)
 
     #Starting the Learning
     for epoch in range(1, tot_epoch):
@@ -58,8 +57,6 @@ def main():
         colour_selected = np.random.randint(0, 6)
         colour_range = np.random.randint(100, 255)
         colour_range = float(colour_range) / 255.0
-        #colour_range = np.random.random_sample()
-        #colour_range = 1
         if(colour_selected == 0): input_vector = np.array([colour_range, 0, 0]) #RED
         if(colour_selected == 1): input_vector = np.array([0, colour_range, 0]) #GREEN
         if(colour_selected == 2): input_vector = np.array([0, 0, colour_range]) #BLUE
@@ -87,10 +84,10 @@ def main():
         #print("BMU NEIGHBORHOOD: " + str(bmu_neighborhood_list))
 
 
-    #Saving the network for a later use
-    file_name = "./som_colours.npz"
+    #Saving the network
+    file_name = output_path + "som_colours.npz"
     print("Saving the network in: " + str(file_name))
-    my_som.save(path="./", name="some_colours")
+    my_som.save(path=output_path, name="some_colours")
 
     img = np.rint(my_som.return_weights_matrix()*255)
     plt.axis("off")
