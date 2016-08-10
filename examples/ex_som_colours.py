@@ -14,6 +14,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import os 
 
 #It requires the pyERA library
 from pyERA.som import Som
@@ -24,8 +25,10 @@ from pyERA.utils import LinearDecay
 def main():
 
     #Set to True if you want to save the SOM images inside a folder.
-    SAVE_IMAGE = False
-    image_path = "./images/" #Change this path to save in a different forlder 
+    SAVE_IMAGE = True
+    output_path = "./output/" #Change this path to save in a different forlder
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
 
     #Init the SOM
     som_size = 32
@@ -45,7 +48,7 @@ def main():
             img = np.rint(my_som.return_weights_matrix()*255)
             plt.axis("off")
             plt.imshow(img)
-            plt.savefig(image_path + str(epoch) + ".png", dpi=None, facecolor='black')
+            plt.savefig(output_path + str(epoch) + ".png", dpi=None, facecolor='black')
 
         #Updating the learning rate and the radius
         learning_rate = my_learning_rate.return_decayed_value(global_step=epoch)
