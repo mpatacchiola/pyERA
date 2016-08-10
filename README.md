@@ -33,25 +33,20 @@ In some cases, one of the existing input SOMs can be selected as the hub but mor
 
 Installation
 ------------
-The package does not require any special library, the only requirement is numpy. In the following instruction I suppose that you cloned pyERA in your home folder. To import the pyERA modules it is possible to set the package directory in the $PYTHONPATH from terminal: 
+
+Download the repository from [[here]](https://github.com/mpatacchiola/pyERA/archive/master.zip) or clone it using git:
 
 ```shell
-export PYTHONPATH="${PYTHONPATH}:~/pyERA/pyERA"
+git clone https://github.com/mpatacchiola/pyERA.git
 ```
 
-When you restart the terminal you have to export again the package. Alternatively you can write the same line in your `~/.bashrc` file. You can also load the package directly from python code, inserting the following lines at the beginning of the file:
+To install the package you have to run the setup.py script:
 
-```python
-import sys
-sys.path.insert(0, "~/pyERA/pyERA")
+```shell
+python setup.py install
 ```
 
-If the package was correctly added to your $PYTHONPATH you can use it and import the different pyERA modules, for example:
-
-```python
-from pyERA.som import Som
-from pyERA.utils import ExponentialDecay 
-```
+Done! pyERA is installed and ready to be used. You can now give a look to the examples folder...
 
 Examples
 ---------
