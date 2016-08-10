@@ -11,11 +11,6 @@
 # an empty video will be created.
 # At the end of the example the network is saved inside the file: examples/som_colours.npz
 
-
-#Add the pyERA package
-import sys
-sys.path.insert(0, "../pyERA")
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -30,15 +25,16 @@ def main():
 
     #Set to True if you want to save the SOM images inside a folder.
     SAVE_IMAGE = False
+    image_path = "./images/" #Change this path to save in a different forlder 
 
     #Init the SOM
-    som_size = 64
-    my_som = Som(matrix_size=64, input_size=3, low=0, high=1, round_values=False)
+    som_size = 32
+    my_som = Som(matrix_size=som_size, input_size=3, low=0, high=1, round_values=False)
     
     #Init the parameters
     tot_epoch = 1500
-    my_learning_rate = ExponentialDecay(starter_value=0.5, decay_step=50, decay_rate=0.9, staircase=True)
-    my_radius = ExponentialDecay(starter_value=32, decay_step=80, decay_rate=0.85, staircase=True)
+    my_learning_rate = ExponentialDecay(starter_value=0.4, decay_step=50, decay_rate=0.9, staircase=True)
+    my_radius = ExponentialDecay(starter_value=np.rint(som_size/3), decay_step=80, decay_rate=0.90, staircase=True)
     #my_radius = LinearDecay(starter_value=30, decay_rate=0.02, allow_negative=False)
 
     #Starting the Learning
@@ -49,7 +45,7 @@ def main():
             img = np.rint(my_som.return_weights_matrix()*255)
             plt.axis("off")
             plt.imshow(img)
-            plt.savefig("/home/massimiliano/pyERA/examples/images/" + str(epoch) + ".png", dpi=None, facecolor='black')
+            plt.savefig(image_path + str(epoch) + ".png", dpi=None, facecolor='black')
 
         #Updating the learning rate and the radius
         learning_rate = my_learning_rate.return_decayed_value(global_step=epoch)
@@ -89,9 +85,9 @@ def main():
 
 
     #Saving the network for a later use
-    file_name = "./examples/som_colours.npz"
+    file_name = "./som_colours.npz"
     print("Saving the network in: " + str(file_name))
-    my_som.save(path="./examples/", name="some_colours")
+    my_som.save(path="./", name="some_colours")
 
     img = np.rint(my_som.return_weights_matrix()*255)
     plt.axis("off")
