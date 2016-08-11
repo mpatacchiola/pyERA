@@ -83,8 +83,8 @@ Examples
 <img src="doc/images/ex_som_color_quantization.png">
 </p>
 
-[comment]: <> (How to use Self-Organizing Map for color clustering and partitioning)
 
+<!-- How to use Self-Organizing Map for color clustering and partitioning --> 
 
 References
 -----------
