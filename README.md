@@ -65,13 +65,13 @@ Examples
 <img src="doc/images/ex_som_marilyn_monroe.png">
 </p>
 
-- How to pre-train a Self-Organizing Map to classify six different RGB colours [[code]](examples/ex_som_colours.py) [[video]](https://www.youtube.com/watch?v=3UOnOpUeZwk)
+- How to pre-train a Self-Organizing Map to classify six different RGB colors [[code]](examples/ex_som_colours.py) [[video]](https://www.youtube.com/watch?v=3UOnOpUeZwk)
 
 <p align="center">
 <img src="doc/images/ex_som_colours.png">
 </p>
 
-- How to visualize the Euclidean distance between an input vector and the weights of a Self-Organizing Map [[code]](examples/ex_som_activation.py) [[video]](https://www.youtube.com/watch?v=HYGxx-clLRo) [[wiki]](https://en.wikipedia.org/wiki/Euclidean_distance)
+- How to visualize the Euclidean distance between input vector and weights of a Self-Organizing Map [[code]](examples/ex_som_activation.py) [[video]](https://www.youtube.com/watch?v=HYGxx-clLRo) [[wiki]](https://en.wikipedia.org/wiki/Euclidean_distance)
 
 <p align="center">
 <img src="doc/images/ex_som_activation.png">
@@ -82,6 +82,8 @@ Examples
 <p align="center">
 <img src="doc/images/ex_som_color_quantization.png">
 </p>
+
+[comment]: <> (How to use Self-Organizing Map for color clustering and partitioning)
 
 
 References
