@@ -71,10 +71,16 @@ Examples
 <img src="doc/images/ex_som_colours.png">
 </p>
 
-- How to visualize the Euclidean distance between an input vector and the weights of a Self-Organizing Map [[code]](examples/ex_som_activation.py) [[video]](https://www.youtube.com/watch?v=HYGxx-clLRo)
+- How to visualize the Euclidean distance between an input vector and the weights of a Self-Organizing Map [[code]](examples/ex_som_activation.py) [[video]](https://www.youtube.com/watch?v=HYGxx-clLRo) [[wiki]](https://en.wikipedia.org/wiki/Euclidean_distance)
 
 <p align="center">
 <img src="doc/images/ex_som_activation.png">
+</p>
+
+- How to use a Self-Organizing Map for color quantization [[code]](examples/ex_som_color_quantization.py) [[wiki]](https://en.wikipedia.org/wiki/Color_quantization)
+
+<p align="center">
+<img src="doc/images/ex_som_color_quantization.png">
 </p>
 
 
