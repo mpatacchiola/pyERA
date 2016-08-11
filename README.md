@@ -77,7 +77,7 @@ Examples
 <img src="doc/images/ex_som_activation.png">
 </p>
 
-- How to use a Self-Organizing Map for color quantization [[code]](examples/ex_som_color_quantization.py) [[wiki]](https://en.wikipedia.org/wiki/Color_quantization)
+- How to use a Self-Organizing Map for color quantization [[code]](examples/ex_som_color_quantization.py) [[video]](https://www.youtube.com/watch?v=ZCDF9f1Wo0Q) [[wiki]](https://en.wikipedia.org/wiki/Color_quantization)
 
 <p align="center">
 <img src="doc/images/ex_som_color_quantization.png">
