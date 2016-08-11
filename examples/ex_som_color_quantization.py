@@ -8,10 +8,10 @@
 #
 # In this example an image is passed as input. A batch of pixel is sampled and given as dataset to
 # a Self-Organizing Map (SOM). The SOM will find the best colour vectors representing the image.
-# The idea is to describe the same image with a lower number of colours. If the SOM has size 4
+# The idea is to describe the same image with a lower number of colors. If the SOM has size 4
 # then the resulting number of pixel used will be 4*4 = 16. In comparison the total possible 
 # combination of colours in the RGB format is 255*255*255 = 16,581,375
-# To get the total number of colours in an image it is possible to use the command:
+# To get the total number of colors in an image it is possible to use the command:
 # identify -verbose -unique image_name.jpg
 
 import numpy as np
@@ -31,13 +31,14 @@ def main():
     som_size = 4
     batch_size = 32
     tot_epoch = 200
+    image_name = "chameleon.jpg" #the file must be in the "./input" folder
 
     #Set to True if you want to save the SOM images inside a folder.
     SAVE_IMAGE = True
     output_path = "./output/" #Change this path to save in a different forlder
     if not os.path.exists(output_path):
         os.makedirs(output_path) 
-    img_original = Image.open("./input/parrot.jpg")
+    img_original = Image.open("./input/" + image_name)
     img_input_matrix = np.asarray(img_original, dtype=np.float32)
     img_rows = img_input_matrix.shape[0]
     img_cols = img_input_matrix.shape[1]
@@ -112,10 +113,16 @@ def main():
     print("Saving the network in: " + str(file_name))
     my_som.save(path=output_path, name="som_color_quantization")
 
-    img = np.rint(my_som.return_weights_matrix()*255)
-    plt.axis("off")
-    plt.imshow(img)
-    plt.show()
+    #Saving the final image
+    img_output = ((img_output_matrix- 255) * -1 ).astype(np.uint8)
+    img_to_save = Image.fromarray(img_output, "RGB")
+    img_to_save.save(output_path + image_name)
+
+    #Showing the SOM weights
+    #img = np.rint(my_som.return_weights_matrix())
+    #plt.axis("off")
+    #plt.imshow(img)
+    #plt.show()
 
 if __name__ == "__main__":
     main()
