@@ -74,6 +74,16 @@ class HebbianNetwork:
         """     
         return self._node_list[index]['Matrix']
 
+    def reset_node_activations(self, index):
+        """Reset the activation matrix associated with a node to numpy.zeros
+
+        The nodes are added following an incremental index.
+        To remove the node it is necessary to have the index 
+        associated to it.
+        @param index the numeric node index
+        """
+        self._node_list[index]['Matrix'] = np.zeros((self._node_list[index]['Rows'], self._node_list[index]['Cols']))
+
     def return_node_connection_list(self, index):
         """Return a list containing all the nodes connected to the index
 
@@ -87,10 +97,9 @@ class HebbianNetwork:
                 node_connection_list.append(connection_dict['Start'])
         return node_connection_list
 
-    #TODO Given a node it looks for a list of other nodes
-    #connected to it and then it computes the output activations
-    #multiplying and adding all the input to the nodes and the
-    #hebbian weights.
+    #TODO Given a node it takes the list of nodes connected to it
+    #and then it computes the output activations of that node
+    #multiplying other activations and the associated hebbian weights.
     def compute_node_activations(self, index):
         print("TODO")
 
@@ -106,6 +115,7 @@ class HebbianNetwork:
 
         node_connection_list = self.return_node_connection_list(second_node_index)
         if(first_node_index in node_connection_list):
+            print("False, the connection already exists")
             return False
 
         first_shape = (self._node_list[first_node_index]['Rows'], self._node_list[first_node_index]['Cols'])
