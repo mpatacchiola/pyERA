@@ -32,8 +32,8 @@ class HebbianNetwork:
         The nodes are added following an incremental index.
         To access the node properties it is necessary to have
         the index associated to it.
-        @param name
-        @param shape
+        @param name the name of the node (it is different from the index)
+        @param shape the shape is a list that indentifies num rows and num cols
         """
         rows = shape[0]
         cols = shape[1]
@@ -54,7 +54,7 @@ class HebbianNetwork:
         """
         self._node_list.remove(index)
 
-    def set_node_activation_matrix(self, index, matrix):
+    def set_node_activations(self, index, matrix):
         """Set the activation matrix associated with a node.
 
         The nodes are added following an incremental index.
@@ -64,7 +64,7 @@ class HebbianNetwork:
         """
         self._node_list[index]['Matrix'] = matrix
 
-    def get_node_activation_matrix(self, index):
+    def get_node_activations(self, index):
         """Get the activation matrix associated with a node.
 
         The nodes are added following an incremental index.
@@ -74,21 +74,46 @@ class HebbianNetwork:
         """     
         return self._node_list[index]['Matrix']
 
-    #TODO check if the connection between the two nodes 
-    #already exists.
-    def add_connection(self, input_node_index, output_node_index):
-        """Add a connection between two nodes.
+    def return_node_connection_list(self, index):
+        """Return a list containing all the nodes connected to the index
 
-        @param input_node_index
-        @param output_node_index
+        @param index the numeric node index
         """
-        if(input_node_index< 0 or output_node_index<0 or input_node_index>=len(self._node_list) or output_node_index>=len(self._node_list) or input_node_index==output_node_index): 
+        node_connection_list = list()
+        for connection_dict in self._connection_list:
+            if(connection_dict['Start']==index):
+                node_connection_list.append(connection_dict['End'])
+            elif(connection_dict['End']==index):
+                node_connection_list.append(connection_dict['Start'])
+        return node_connection_list
+
+    #TODO Given a node it looks for a list of other nodes
+    #connected to it and then it computes the output activations
+    #multiplying and adding all the input to the nodes and the
+    #hebbian weights.
+    def compute_node_activations(self, index):
+        print("TODO")
+
+    def add_connection(self, first_node_index, second_node_index):
+        """Add a connection between two nodes.
+       
+        @param first_node_index
+        @param second_node_index
+        @return True if operation succeeded, False if the connection already exists
+        """
+        if(first_node_index< 0 or second_node_index<0 or first_node_index>=len(self._node_list) or second_node_index>=len(self._node_list) or first_node_index==second_node_index): 
             raise ValueError('hebbian_network: there is a conflict in the index.')
-        input_shape = (self._node_list[input_node_index]['Rows'], self._node_list[input_node_index]['Cols'])
-        output_shape = (self._node_list[output_node_index]['Rows'], self._node_list[output_node_index]['Cols'])
-        temp_connection = HebbianConnection(input_shape, output_shape)
-        dict = {'input_index': input_node_index, 'output_index': output_node_index, 'connection': temp_connection }
+
+        node_connection_list = self.return_node_connection_list(second_node_index)
+        if(first_node_index in node_connection_list):
+            return False
+
+        first_shape = (self._node_list[first_node_index]['Rows'], self._node_list[first_node_index]['Cols'])
+        second_shape = (self._node_list[second_node_index]['Rows'], self._node_list[second_node_index]['Cols'])
+        temp_connection = HebbianConnection(first_shape, second_shape)
+        dict = {'Start': first_node_index, 'End': second_node_index, 'Connection': temp_connection }
         self._connection_list.append(dict.copy())
+        return True
 
     def return_total_nodes(self):
         """Return the total number of nodes in the network
@@ -117,7 +142,7 @@ class HebbianConnection:
     """HebbianConnecttion
 
     This is an implementation of an hebbian connection
-    between two layers.
+    between two nodes.
     """
     def __init__(self, input_shape, output_shape):
         """Initialize the hebbian connections between two networks.
