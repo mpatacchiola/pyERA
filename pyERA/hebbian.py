@@ -26,35 +26,92 @@ class HebbianNetwork:
         self._connection_list = list()
 
 
-    def add_node(self, name, width, height)
+    def add_node(self, name, shape):
         """Add the node to the network.
 
-        @param name the name of the node
-        @param width
-        @param height
+        The nodes are added following an incremental index.
+        To access the node properties it is necessary to have
+        the index associated to it.
+        @param name
+        @param shape
         """
-        if(width <= 0 or height<=0): raise ValueError('hebbian_network: the widht and the height cannot be negative or null.')
-        dict = {'Name': name, 'Width': width, 'Height': height}
+        rows = shape[0]
+        cols = shape[1]
+        if(rows <= 0 or cols<=0): raise ValueError('hebbian_network: the widht and the height cannot be negative or null.')
+        temp_maptrix = np.zeros((rows, cols))
+        dict = {'Name': name, 'Rows': rows, 'Cols': cols, 'Matrix': temp_maptrix}
         self._node_list.append(dict.copy()) #append a swallow copy of the dict
 
+    #TODO remove all the connections associated with
+    #the removed node.
+    def remove_node(self, index):
+        """Remove the node to the network.
 
+        The nodes are added following an incremental index.
+        To remove the node it is necessary to have the index 
+        associated to it.
+        @param index the numeric node index
+        """
+        self._node_list.remove(index)
+
+    def set_node_activation_matrix(self, index, matrix):
+        """Set the activation matrix associated with a node.
+
+        The nodes are added following an incremental index.
+        To remove the node it is necessary to have the index 
+        associated to it.
+        @param index the numeric node index
+        """
+        self._node_list[index]['Matrix'] = matrix
+
+    def get_node_activation_matrix(self, index):
+        """Get the activation matrix associated with a node.
+
+        The nodes are added following an incremental index.
+        To remove the node it is necessary to have the index 
+        associated to it.
+        @param index the numeric node index
+        """     
+        return self._node_list[index]['Matrix']
+
+    #TODO check if the connection between the two nodes 
+    #already exists.
     def add_connection(self, input_node_index, output_node_index):
-        """Initialize the hebbian network.
+        """Add a connection between two nodes.
 
         @param input_node_index
         @param output_node_index
         """
+        if(input_node_index< 0 or output_node_index<0 or input_node_index>=len(self._node_list) or output_node_index>=len(self._node_list) or input_node_index==output_node_index): 
+            raise ValueError('hebbian_network: there is a conflict in the index.')
+        input_shape = (self._node_list[input_node_index]['Rows'], self._node_list[input_node_index]['Cols'])
+        output_shape = (self._node_list[output_node_index]['Rows'], self._node_list[output_node_index]['Cols'])
+        temp_connection = HebbianConnection(input_shape, output_shape)
+        dict = {'input_index': input_node_index, 'output_index': output_node_index, 'connection': temp_connection }
+        self._connection_list.append(dict.copy())
 
     def return_total_nodes(self):
+        """Return the total number of nodes in the network
+
+        """
         return len(self._node_list)
 
     def return_total_connections(self):
+        """Return the total number of connections in the network
+
+        """
         return len(self._connection_list)
 
     def print_info(self):
-        print("Name: " + str(self.name))
-        print("Tot Nodes: " + str(return_total_nodes()))
-        print("Total Connection: " + str(return_total_connections))
+        """Print on the terminal some info about the network
+
+        """
+        print("")
+        print("Name ..... " + str(self.name))
+        print("Total Nodes ..... " + str(self.return_total_nodes()))
+        print("Total Connections ..... " + str(self.return_total_connections()))
+        print("")
+
 
 class HebbianConnection:
     """HebbianConnecttion
