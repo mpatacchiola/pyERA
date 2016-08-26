@@ -205,44 +205,45 @@ class HebbianConnection:
             self._weights_matrix[it.multi_index[0], it.multi_index[1]] += delta_weight
             it.iternext()
 
-    def compute_forward_activation(self, input_activation_matrix):
-        """It returns the activation matrix of the output layer
+
+    def compute_activation(self, activation_matrix, reverse=False):
+        """It returns the activation matrix of input/output layer
 
         @param input_activation_matrix a vector or a bidimensional matrix representing the activation of the input units
+        @param reverse it defines the computation direction, False=Forward (input > Ouptu), True=Backward (Input < Output)
         """
-        input_activation_vector = input_activation_matrix.flatten()
-        output_activation_matrix = np.zeros(self._output_shape)
-        output_activation_vector = output_activation_matrix.flatten()
+        #Forward activation
+        if(reverse == False):
 
-        #Iterates the elements in weights_matrix and use the row index for
-        #accessing the element of the flatten input matrix.
-        it = np.nditer(self._weights_matrix, flags=['multi_index'])
-        while not it.finished:
-            output_activation_vector[it.multi_index[1]] +=  input_activation_vector[it.multi_index[0]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]]
-            it.iternext()
+            input_activation_vector = activation_matrix.flatten()
+            output_activation_matrix = np.zeros(self._output_shape)
+            output_activation_vector = output_activation_matrix.flatten()
 
-        output_activation_matrix = output_activation_vector.reshape(self._output_shape)
-        return output_activation_matrix
+            #Iterates the elements in weights_matrix and use the row index for
+            #accessing the element of the flatten input matrix.
+            it = np.nditer(self._weights_matrix, flags=['multi_index'])
+            while not it.finished:
+                output_activation_vector[it.multi_index[1]] +=  input_activation_vector[it.multi_index[0]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]]
+                it.iternext()
 
+            output_activation_matrix = output_activation_vector.reshape(self._output_shape)
+            return output_activation_matrix
 
-    def compute_backward_activation(self, output_activation_matrix):
-        """It returns the activation matrix of the input layer
+        #Backward activation
+        elif(reverse == True):
 
-        @param output_activation_matrix a vector or a bidimensional matrix representing the activation of the output units
-        """
-        output_activation_vector = output_activation_matrix.flatten()
-        input_activation_matrix = np.zeros(self._input_shape)
-        input_activation_vector = input_activation_matrix.flatten()
+            output_activation_vector = activation_matrix.flatten()
+            input_activation_matrix = np.zeros(self._input_shape)
+            input_activation_vector = input_activation_matrix.flatten()
 
-        #Iterates the elements in weights_matrix and use the col index for
-        #accessing the element of the flatten output matrix.
-        it = np.nditer(self._weights_matrix, flags=['multi_index'])
-        while not it.finished:
-            input_activation_vector[it.multi_index[0]] +=  output_activation_vector[it.multi_index[1]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]]
-            it.iternext()
+            #Iterates the elements in weights_matrix and use the col index for
+            #accessing the element of the flatten output matrix.
+            it = np.nditer(self._weights_matrix, flags=['multi_index'])
+            while not it.finished:
+                input_activation_vector[it.multi_index[0]] +=  output_activation_vector[it.multi_index[1]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]]
+                it.iternext()
 
-        input_activation_matrix = input_activation_vector.reshape(self._input_shape)
-        return input_activation_matrix
-
+            input_activation_matrix = input_activation_vector.reshape(self._input_shape)
+            return input_activation_matrix
 
 
