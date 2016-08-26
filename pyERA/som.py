@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+##
+# Massimiliano Patacchiola, Plymouth University (2016)
+#
+# Implementation of a Self-Organizing Map class
+#
+
 import numpy as np
 
 
@@ -247,7 +253,7 @@ class Som:
         @param learning_rate
         @param radius it is used to update the weights based on distance.
         """
-        if(type(input_vector).__module__ != np.__name__): raise ValueError('som: the input vector must be a numpy array.')
+        if(type(input_vector).__module__ != np.__name__): raise ValueError('som: the input vector must be a numpy array.') 
         for unit in units_list:
             row = unit[0]
             col = unit[1]
