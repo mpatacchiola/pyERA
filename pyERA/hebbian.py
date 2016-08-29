@@ -158,7 +158,7 @@ class HebbianNetwork:
         if(set_node_matrix=True): self.set_node_activations(index, node_activation_matrix)
         return node_activation_matrix
 
-    def learning(self, learning_rate=0.01):
+    def learning(self, learning_rate=0.01, rule="hebb"):
         """One step learning for all the connections. 
        
         Calling this function the network updates the connection values 
@@ -169,6 +169,9 @@ class HebbianNetwork:
         #Check if the learning_rate is negative
         if(learning_rate <= 0): raise ValueError("HebbianNetork: Error the learning rate must be positive not null.")
 
+        if(rule!="hebb" and rule!="antihebb" and rule!="oja"):
+            raise ValueError('HebbianNetwork: the learning rule does not exist. Available rules are hebb, antihebb and oja.')
+
         #Cycling thorugh each connection and
         #applying the learning rule.
         for connection_dict in self._connection_list:
@@ -176,17 +179,17 @@ class HebbianNetwork:
             output_index = connection_dict['End']
             input_activation_matrix = self.get_node_activations(input_index)
             output_activation_matrix = self.get_node_activations(output_index)
-            if(connection_dict['Rule'] == "hebb"):
+            if(rule == "hebb"):
                 connection_dict['Connection'].learning_hebb_rule(input_activation_matrix, output_activation_matrix, learning_rate)
-            elif(connection_dict['Rule'] == "antihebb"):
+            elif(rule == "antihebb"):
                 connection_dict['Connection'].learning_anti_hebb_rule(input_activation_matrix, output_activation_matrix, learning_rate)
-            elif(connection_dict['Rule'] == "oja"):
+            elif(rule == "oja"):
                 connection_dict['Connection'].learning_oja_rule(input_activation_matrix, output_activation_matrix, learning_rate)
             else:
                 raise ValueError("HebbianNetork: Error the learning rule specified does not exist.")
 
 
-    def add_connection(self, first_node_index, second_node_index, rule="hebb"):
+    def add_connection(self, first_node_index, second_node_index):
         """Add a connection between two nodes.
        
         @param first_node_index
@@ -201,13 +204,10 @@ class HebbianNetwork:
             #print("False, the connection already exists")
             return False
 
-        if(rule!="hebb" and rule!="antihebb" and rule!="oja"):
-            raise ValueError('HebbianNetwork: the learning rule does not exist. Available rules are hebb, antihebb and oja.')
-
         first_shape = (self._node_list[first_node_index]['Rows'], self._node_list[first_node_index]['Cols'])
         second_shape = (self._node_list[second_node_index]['Rows'], self._node_list[second_node_index]['Cols'])
         temp_connection = HebbianConnection(first_shape, second_shape)
-        dict = {'Start': first_node_index, 'End': second_node_index, 'Connection': temp_connection, 'Rule': rule }
+        dict = {'Start': first_node_index, 'End': second_node_index, 'Connection': temp_connection }
         self._connection_list.append(dict.copy())
         return True
 
