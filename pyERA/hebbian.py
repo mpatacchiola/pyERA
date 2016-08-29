@@ -3,7 +3,7 @@
 ##
 # Massimiliano Patacchiola, Plymouth University (2016)
 #
-# Implementation of hebbian connection and hebbian network classes
+# Implementation of hebbian connection and hebbian network classes.
 #
 
 
@@ -13,6 +13,13 @@ class HebbianNetwork:
     """HebbianNetwork
 
     This is an implementation of the hebbian network class.
+    The Hebbian Network is considered as an integrator of nodes.
+    The nodes are references, some kind of abstract labels.
+    Each node can be a Self-Organizing Map, the output vector of
+    another kind of artificial network or the output of a generic system.
+    In the first phase the network can be organised step by step adding and removing nodes.
+    In a second phase it is possible to connect nodes using Hebbian Connections.
+    In a third phase it is possible to compute the activation of each node.
     """
     def __init__(self, name):
         """Initialize the hebbian network.
@@ -128,7 +135,7 @@ class HebbianNetwork:
                 node_connection_list.append(connection_dict['Start'])
         return node_connection_list
 
-    def compute_node_activations(self, index, set_node_matrix=False):
+    def compute_node_activations(self, index, set_node_matrix=True):
         """Compute the node activations and return the activation matrix. 
        
         Based on the activation matrices set with previous call to set_node_activations,
@@ -155,7 +162,7 @@ class HebbianNetwork:
                 node_activation_matrix = np.add(node_activation_matrix, connection_dict['Connection'].compute_activation(activation_matrix, reverse=False))
                 #node_activation_matrix += connection_dict['Connection'].compute_activation(activation_matrix, reverse=False)
 
-        if(set_node_matrix=True): self.set_node_activations(index, node_activation_matrix)
+        if(set_node_matrix==True): self.set_node_activations(index, node_activation_matrix)
         return node_activation_matrix
 
     def learning(self, learning_rate=0.01, rule="hebb"):
@@ -163,6 +170,7 @@ class HebbianNetwork:
        
         Calling this function the network updates the connection values 
         based on the connection properties and the specific learning rule.
+        There are three possible learning rules: hebb, antihebb and oja (see HebbianConnection class)
         @param learning_rate
         @return True if operation succeeded, False if the connection already exists
         """
