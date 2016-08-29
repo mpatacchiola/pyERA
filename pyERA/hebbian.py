@@ -112,26 +112,33 @@ class HebbianNetwork:
     def compute_node_activations(self, index):
         print("TODO")
 
-    def learning(self, rule="hebb", learning_rate=0.01):
-        """One step learning between all the connections. 
+    def learning(self, learning_rate=0.01):
+        """One step learning for all the connections. 
        
-        Calling this function the learning rule
-        @param first_node_index
-        @param second_node_index
+        Calling this function the network updates the connection values 
+        based on the connection properties and the specific learning rule.
+        @param learning_rate
         @return True if operation succeeded, False if the connection already exists
         """
         #Check if the learning_rate is negative
         if(learning_rate <= 0): raise ValueError("HebbianNetork: Error the learning rate must be positive not null.")
 
-        #Check for the learning rule 
-        if(rule == "hebb"):
+        #Cycling thorugh each connection and
+        #applying the learning rule.
+        for connection_dict in self._connection_list:
+            input_index = connection_dict['Start']
+            output_index = connection_dict['End']
+            input_activation_matrix = get_node_activations(input_index)
+            output_activation_matrix = get_node_activations(output_index)
+            if(connection_dict['Rule'] == "hebb"):
+                connection_dict['Connection'].learning_hebb_rule(input_activation_matrix, output_activation_matrix, learning_rate)
+            elif(connection_dict['Rule'] == "antihebb"):
+                connection_dict['Connection'].learning_anti_hebb_rule(input_activation_matrix, output_activation_matrix, learning_rate)
+            elif(connection_dict['Rule'] == "oja"):
+                connection_dict['Connection'].learning_oja_rule(input_activation_matrix, output_activation_matrix, learning_rate)
+            else:
+                raise ValueError("HebbianNetork: Error the learning rule specified does not exist.")
 
-        elif(rule == "antihebb"):
-
-        elif(rule == "oja"):
-
-        else:
-            raise ValueError("HebbianNetork: Error the learning rule specified does not exist, available rules are hebb, antihebb, oja.")
 
     def add_connection(self, first_node_index, second_node_index, rule="hebb"):
         """Add a connection between two nodes.
@@ -241,10 +248,11 @@ class HebbianConnection:
         then the strength of that synapse is selectively decreased.
         @param input_activations a vector or a bidimensional matrix representing the activation of the input units
         @param output_activations a vector or a bidimensional matrix representing the activation of the output units
-        @param learning_rate (negative) it is costant that defines the decreasing step
+        @param learning_rate (positive converted internally to negative) it is costant that defines the decreasing step
         """
-        if(learning_rate >=0): raise ValueError('hebbian_connection: error the learning rate used for the anti-hebbian rule must be <0')
+        if(learning_rate <=0): raise ValueError('hebbian_connection: error the learning rate used for the anti-hebbian rule must be >0')
 
+        learning_rate = -learning_rate #The antihebb has negative learning_rate
         input_activation = input_activation.flatten()
         output_activation = output_activation.flatten()
 
@@ -265,6 +273,8 @@ class HebbianConnection:
         @param output_activations a vector or a bidimensional matrix representing the activation of the output units
         @param learning_rate it is costant that defines the learning step
         """
+        if(learning_rate <=0): raise ValueError('hebbian_connection: error the learning rate used for the oja rule must be >0')
+
         input_activation = input_activation.flatten()
         output_activation = output_activation.flatten()
 
