@@ -106,11 +106,57 @@ class HebbianNetwork:
                 node_connection_list.append(connection_dict['Start'])
         return node_connection_list
 
-    #TODO Given a node it takes the list of nodes connected to it
-    #and then it computes the output activations of that node
-    #multiplying other activations and the associated hebbian weights.
-    def compute_node_activations(self, index):
-        print("TODO")
+    def return_node_incoming_connection_list(self, index):
+        """Return a list containing all the nodes that project a connection to the index node
+
+        @param index the numeric node index
+        """
+        node_connection_list = list()
+        for connection_dict in self._connection_list:
+            if(connection_dict['End']==index):
+                node_connection_list.append(connection_dict['End'])
+        return node_connection_list
+
+    def return_node_outgoing_connection_list(self, index):
+        """Return a list containing all the nodes that receive a connection from the index node
+
+        @param index the numeric node index
+        """
+        node_connection_list = list()
+        for connection_dict in self._connection_list:
+            if(connection_dict['Start']==index):
+                node_connection_list.append(connection_dict['Start'])
+        return node_connection_list
+
+    def compute_node_activations(self, index, set_node_matrix=False):
+        """Compute the node activations and return the activation matrix. 
+       
+        Based on the activation matrices set with previous call to set_node_activations,
+        it computes the index node output matrix multiplying the commections weights with
+        the input/output activation matrices of the other nodes afferent to the index.
+        @param index the index of the node to compute
+        @param set_node_matrix if True before return it assigns the internal output matrix to the index node.
+        """
+        node_activation_matrix = np.zeros((self._node_list[index]['Rows'], self._node_list[index]['Cols']))
+
+        #Iterate through all the connections looking for the 
+        #incoming and outgoing connections to the index node
+        for connection_dict in self._connection_list:
+            #The node is a starting node then to compute its activation
+            #It is necessary to go in reverse from: input < output
+            if(connection_dict['Start']==index):
+                activation_matrix = self._node_list[connection_dict['End']]['Matrix']               
+                node_activation_matrix = np.add(node_activation_matrix, connection_dict['Connection'].compute_activation(activation_matrix, reverse=True)) 
+                #node_activation_matrix += connection_dict['Connection'].compute_activation(activation_matrix, reverse=True)
+            #The node is an ending node then to compute its activation
+            #it is necessary to go directly from: input > output
+            if(connection_dict['End']==index):
+                activation_matrix = self._node_list[connection_dict['Start']]['Matrix']
+                node_activation_matrix = np.add(node_activation_matrix, connection_dict['Connection'].compute_activation(activation_matrix, reverse=False))
+                #node_activation_matrix += connection_dict['Connection'].compute_activation(activation_matrix, reverse=False)
+
+        if(set_node_matrix=True): self.set_node_activations(index, node_activation_matrix)
+        return node_activation_matrix
 
     def learning(self, learning_rate=0.01):
         """One step learning for all the connections. 
@@ -128,8 +174,8 @@ class HebbianNetwork:
         for connection_dict in self._connection_list:
             input_index = connection_dict['Start']
             output_index = connection_dict['End']
-            input_activation_matrix = get_node_activations(input_index)
-            output_activation_matrix = get_node_activations(output_index)
+            input_activation_matrix = self.get_node_activations(input_index)
+            output_activation_matrix = self.get_node_activations(output_index)
             if(connection_dict['Rule'] == "hebb"):
                 connection_dict['Connection'].learning_hebb_rule(input_activation_matrix, output_activation_matrix, learning_rate)
             elif(connection_dict['Rule'] == "antihebb"):
