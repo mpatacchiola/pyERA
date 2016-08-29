@@ -3,7 +3,7 @@
 ##
 # Massimiliano Patacchiola, Plymouth University (2016)
 #
-# Implementation of hebbian connection and hebbian network class
+# Implementation of hebbian connection and hebbian network classes
 #
 
 
@@ -42,17 +42,26 @@ class HebbianNetwork:
         dict = {'Name': name, 'Rows': rows, 'Cols': cols, 'Matrix': temp_maptrix}
         self._node_list.append(dict.copy()) #append a swallow copy of the dict
 
-    #TODO remove all the connections associated with
-    #the removed node.
     def remove_node(self, index):
-        """Remove the node to the network.
+        """Remove the node from the network and all the connections associated.
 
         The nodes are added following an incremental index.
         To remove the node it is necessary to have the index 
         associated to it.
         @param index the numeric node index
         """
-        self._node_list.remove(index)
+        del self._node_list[index]
+
+        element_counter = 0
+        remove_list = list()
+        for connection_dict in self._connection_list:
+            if(connection_dict['Start']==index or connection_dict['End']==index):
+                remove_list.append(element_counter)
+                element_counter += 1
+
+        #Code for multiple elements removal
+        self._connection_list = [v for i, v in enumerate(self._connection_list) if i not in remove_list]
+
 
     def set_node_activations(self, index, matrix):
         """Set the activation matrix associated with a node.
@@ -142,9 +151,12 @@ class HebbianNetwork:
 
         """
         print("")
-        print("Name ..... " + str(self.name))
+        print("Net Name ..... " + str(self.name))
         print("Total Nodes ..... " + str(self.return_total_nodes()))
         print("Total Connections ..... " + str(self.return_total_connections()))
+        print "Nodes Name: ", 
+        for node_dict in self._node_list:
+            print node_dict['Name'] + ";",
         print("")
 
 
