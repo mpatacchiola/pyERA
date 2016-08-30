@@ -52,7 +52,11 @@ Done! pyERA is installed and ready to be used. Give a look to the examples folde
 cd pyERA/examples/
 ```
 
-The examples require matplotlib (for the visualization of the results).
+The examples require matplotlib (for the visualization of the results), which can be installed from terminal:
+
+```shell
+sudo apt-get install python-matplotlib
+```
 
 Examples
 ---------
