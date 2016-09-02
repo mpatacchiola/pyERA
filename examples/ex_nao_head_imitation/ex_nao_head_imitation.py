@@ -35,13 +35,14 @@ from pyERA.utils import ExponentialDecay
 
 def main():
     # The state machine has the following states:
-    # [VOID, INIT, FIND, IMG, SHOW, COUNTER, NAO, WHICH, QUIT]
+    # [VOID, INIT, FIND, IMG, SHOW, KEY, COUNTER, NAO, WHICH, QUIT]
     #
     # VOID: Empty state, to use for test
     # INIT: It is called only once for the initialisation
     # FIND: use the hardware face and landmark detection libraries
     # IMG: Aquire an image from the camera and convert in in numpy array
     # SHOW: Print the image on screen using OpenCV
+    # KEY: Check which key is pressed
     # COUNTER: Check if some counters are alive. It avoids the use of sleeps.
     # NAO: Pressing the (h) button the robot look in front of itself
     # WHICH: Pressing the (w) button is like asking to the robot to look to a object on the table
@@ -56,8 +57,8 @@ def main():
     #and the associated object name. Stick many naomarks
     #on different objects and be sure the robot can look at 
     #them when turning the head.
-    landmark_id_list = [68, 80, 85]
-    landmark_name_list = ["ball", "book", "cup"]
+    landmark_id_list = [64, 68, 80, 85]
+    landmark_name_list = ["sponge", "stapler", "book", "cup"]
 
     while(True):
 
@@ -236,7 +237,7 @@ def main():
             STATE = "SHOW"
 
         # Show the image on a window and
-        # check if particular key are pressed
+        # draws faces and landmarks
         elif(STATE=="SHOW"):
             if(is_face_detected == True):
                 #The alpha and beta give the coords
@@ -275,6 +276,7 @@ def main():
                     centre_y_mark = beta_mark + 0.5
                     centre_y_mark = int(centre_y_mark * cam_h)
                     radius = int(size_x_mark * cam_w / 2)
+                    centre_y_mark += radius #evaluate if necessary
                     #Draw a blue circle on the landmark
                     cv2.circle(img, 
                              (centre_x_mark, centre_y_mark), 
@@ -289,6 +291,12 @@ def main():
                     #counter += 1
 
             cv2.imshow('image',img)
+            STATE = "KEY"
+
+
+        # Check which key is pressed and
+        # regulates the state macchine passages
+        elif(STATE=="KEY"):
             #When pressing Q on the keyboard swith to QUIT state
             #Check which key is pressed
             key_pressed = cv2.waitKey(1)
@@ -357,22 +365,19 @@ def main():
                  which_counter = 0
             #Multiple landmarks found
             elif(len(naomark_list) > 1):                 
-                 random_sentence = np.random.randint(3)
-                 if(random_sentence == 0 and VOICE_ENBLED==True): _al_tts_proxy.say("I see multiple objects!")
-                 elif(random_sentence == 1 and VOICE_ENBLED==True): _al_tts_proxy.say("Oh, so many object here!")
-                 elif(random_sentence == 2 and VOICE_ENBLED==True): _al_tts_proxy.say("There are many objects!")
+                 if(VOICE_ENBLED==True): _al_tts_proxy.say("I see many objects!")
+                 for naomark in naomark_list:
+                     try:
+                         id_mark = naomark[0]
+                         index_mark = landmark_id_list.index(id_mark)
+                         name_mark = landmark_name_list[index_mark]         
+                         _al_tts_proxy.say(name_mark) #Says the name of each single object
+                     except ValueError:
+                         if(VOICE_ENBLED==True): _al_tts_proxy.say("I don't know this object.")
                  which_counter = 0
-                 #for naomark in naomark_list:
-                    #id_mark = naomark[0]
-                    #alpha_mark = naomark[1]
-                    #beta_mark = naomark[2]
-                    #size_x_mark = naomark[3]
-                    #size_y_mark = naomark[4]
-                    #heading_mark = naomark[5]
             else:
                 which_counter = which_counter + 1
-                if(which_counter >= which_counter_limit):
-                #No landmarks are found
+                if(which_counter >= which_counter_limit):                
                     random_sentence = np.random.randint(3)
                     if(random_sentence == 0 and VOICE_ENBLED==True): _al_tts_proxy.say("I am sorry, I don't see any object!")
                     elif(random_sentence == 1 and VOICE_ENBLED==True): _al_tts_proxy.say("No objects here!")
