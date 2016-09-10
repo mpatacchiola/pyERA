@@ -87,6 +87,12 @@ Examples
 <img src="doc/images/ex_som_color_quantization.png">
 </p>
 
+- Self-Organizing Map for head pose clustering on the NAO humanoid robot [[readme]](examples/ex_som_motor_babbling/README.md) [[code]](examples/ex_som_motor_babbling/ex_som_motor_babbling.py) [[video]](https://www.youtube.com/watch?v=6uwxW-7VfX0) [[wiki]](https://en.wikipedia.org/wiki/Motor_babbling)
+
+<p align="center">
+<img src="doc/images/ex_som_motor_babbling.png">
+</p>
+
 
 <!-- How to use Self-Organizing Map for color clustering and partitioning --> 
 
