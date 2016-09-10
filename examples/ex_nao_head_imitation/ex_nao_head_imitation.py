@@ -52,6 +52,8 @@ def main():
     NAO_IP = "192.168.0.100"
     NAO_PORT = 9559
     VOICE_ENBLED = True #If True the robot speaks
+    RECORD_VOICE = False #If True record all the sentences
+    RECORD_VIDEO = True #If True record a video from the NAO camera
     STATE = "VOID" #The initial state
     #These two lists contains the landmarks ID
     #and the associated object name. Stick many naomarks
@@ -86,6 +88,8 @@ def main():
             _al_face_proxy = ALProxy("ALFaceDetection", NAO_IP, int(NAO_PORT))
             _al_memory_proxy = ALProxy("ALMemory", NAO_IP, int(NAO_PORT))
             _al_video_proxy = ALProxy("ALVideoDevice", NAO_IP, int(NAO_PORT))
+            if(RECORD_VIDEO == True): _al_video_rec_proxy = ALProxy("ALVideoRecorder", NAO_IP, int(NAO_PORT))
+            if(RECORD_VIDEO == True): _al_video_rec_proxy.stopRecording() #reset a dangling connection
             #_al_speechrecognition_proxy = ALProxy("ALSpeechRecognition", NAO_IP, int(NAO_PORT))
 
             # Subscribe to the proxies services
@@ -102,10 +106,18 @@ def main():
                 #ColorSpace= AL::kYuvColorSpace (index=0, channels=1), AL::kYUV422ColorSpace (index=9,channels=3),
                 #AL::kRGBColorSpace RGB (index=11, channels=3), AL::kBGRColorSpace BGR (to use in OpenCV) (index=13, channels=3)
                 #Fps= OV7670 VGA camera can only run at 30, 15, 10 and 5fps. The MT9M114 HD camera run from 1 to 30fps.
+                #Settings for resolution 1 (320x240)
                 resolution_type = 1
+                fps=15
                 cam_w = 320
                 cam_h = 240
-                camera_name_id = _al_video_proxy.subscribeCamera("Test_Video", 0, resolution_type, 13, 15)
+                #Settigns for resolution 2 (320x240)
+                #resolution_type = 2
+                #fps = 15
+                #cam_w = 640
+                #cam_h = 480
+                camera_name_id = _al_video_proxy.subscribeCamera("Test_Video", 0, resolution_type, 13, fps)
+                print("[STATE " + str(STATE) + "] " + "Connected to the camera with resolution: " + str(cam_w) + "x" + str(cam_h) + "\n")
             except BaseException, err:
                 print("[ERROR] connectToCamera: catching error " + str(err))
                 return
@@ -115,6 +127,37 @@ def main():
             #_al_speechrecognition_proxy.setVocabulary(vocabulary, False)
             #_al_speechrecognition_proxy.setVocabulary(vocabulary, False) #If you want to enable word spotting
             #_al_speechrecognition_proxy.subscribe("Test_ASR")
+
+            #Initialise the OpenCV video recorder
+            if(RECORD_VIDEO == True):
+                print("[STATE " + str(STATE) + "] " + "Starting the video recorder..." + "\n")
+                fourcc = cv2.cv.CV_FOURCC(*'XVID')
+                video_out = cv2.VideoWriter("./output.avi", fourcc, 20.0, (cam_w,cam_h))
+                #Record also the NAO session
+                _al_video_rec_proxy.setResolution(2) #Resolution VGA  640*480
+		_al_video_rec_proxy.setFrameRate(30)
+		#_al_video_rec_proxy.setVideoFormat("MJPG")
+		#self._video_proxy.startVideoRecord(complete_path)
+		_al_video_rec_proxy.startRecording("/home/nao/recordings/cameras", "last_session", True) #It worked saving in this path!
+
+            #Save all the sentences inside the NAO memory
+            #it is usefull if you want a clean audio
+            #to present in a video.
+            if(RECORD_VOICE == True):
+                print("[STATE " + str(STATE) + "] " + "Saving the voice in '/home/nao/recordings/microphones'" + "\n")
+                _al_tts_proxy.sayToFile("Hello world!", "/home/nao/recordings/microphones/hello_wolrd.wav")
+                _al_tts_proxy.sayToFile("I see only one object! It's a " , "/home/nao/recordings/microphones/i_see_only_one.wav")
+                _al_tts_proxy.sayToFile("One object here! It's a " , "/home/nao/recordings/microphones/one_object.wav")
+                _al_tts_proxy.sayToFile("There is one object! It's a " , "/home/nao/recordings/microphones/there_is_one.wav")
+                _al_tts_proxy.sayToFile("I am sorry, I don't see any object!", "/home/nao/recordings/microphones/i_dont_see_any.wav")
+                _al_tts_proxy.sayToFile("No objects here!", "/home/nao/recordings/microphones/no_objects.wav")
+                _al_tts_proxy.sayToFile("There is nothing around!", "/home/nao/recordings/microphones/there_is_nothing.wav")
+                _al_tts_proxy.sayToFile("I am doing better!", "/home/nao/recordings/microphones/im_doing_better.wav")
+                _al_tts_proxy.sayToFile("Very good!", "/home/nao/recordings/microphones/very_good.wav")
+                _al_tts_proxy.sayToFile("Catch it!", "/home/nao/recordings/microphones/catch_it.wav")
+                _al_tts_proxy.sayToFile("I will do better nex time!", "/home/nao/recordings/microphones/i_will_do_better.wav")
+                _al_tts_proxy.sayToFile("Sorry, I'm still learning.", "/home/nao/recordings/microphones/still_learning.wav")
+                _al_tts_proxy.sayToFile("I miss it!", "/home/nao/recordings/microphones/miss_it.wav")
 
             #Wake up the robot
             print("[STATE " + str(STATE) + "] " + "Waking up the NAO..." + "\n")
@@ -127,6 +170,9 @@ def main():
             #Reset the head position
             _al_motion_proxy.setAngles("HeadPitch", 0.0, 0.3)
             _al_motion_proxy.setAngles("HeadYaw", 0.0, 0.3)
+
+            #Hello world!!!
+            if(VOICE_ENBLED==True): _al_tts_proxy.say("Hello world!")
 
             #Swithc to STATE > 1
             print("[STATE " + str(STATE) + "] " + "Switching to next state" + "\n")
@@ -290,7 +336,9 @@ def main():
                     #print("")
                     #counter += 1
 
+            #Show the image and record the video
             cv2.imshow('image',img)
+            if(RECORD_VIDEO == True): video_out.write(img)
             STATE = "KEY"
 
 
@@ -308,10 +356,12 @@ def main():
             elif key_pressed==110: #n=NAO
                 print("[STATE " + str(STATE) + "] " + "Button (n)ao pressed..." + "\n")
                 STATE = "NAO"
-            elif key_pressed==103: #g=GOOD
-                print("[STATE " + str(STATE) + "] " + "Button (g)ood pressed..." + "\n")
-            elif key_pressed==98: #b=BAD
-                print("[STATE " + str(STATE) + "] " + "Button (b)ad pressed..." + "\n")
+            elif key_pressed==114: #r=REWARD
+                print("[STATE " + str(STATE) + "] " + "Button (r)eward pressed..." + "\n")
+                STATE = "REWARD"
+            elif key_pressed==112: #p=PUNISHMENT
+                print("[STATE " + str(STATE) + "] " + "Button (p)unishment pressed..." + "\n")
+                STATE = "PUNISHMENT"
             elif key_pressed==119: #w=WHICH object I'm looking
                 print("[STATE " + str(STATE) + "] " + "Button (w)hich pressed..." + "\n")
                 which_counter = 0                
@@ -337,6 +387,11 @@ def main():
             #Reset the head position
             _al_motion_proxy.setAngles("HeadPitch", 0.0, 0.3)
             _al_motion_proxy.setAngles("HeadYaw", 0.0, 0.3)
+            #Produce a sentence
+            random_sentence = np.random.randint(3)
+            if(random_sentence == 0 and VOICE_ENBLED==True): _al_tts_proxy.say("Hello!")
+            elif(random_sentence == 1 and VOICE_ENBLED==True): _al_tts_proxy.say("I'm ready!")
+            elif(random_sentence == 2 and VOICE_ENBLED==True): _al_tts_proxy.say("Yes?")
             STATE = "FIND"
 
         #Asking to NAO to estimate the Teacher head pose
@@ -345,10 +400,19 @@ def main():
         #the NAO says the name of the associated object.
         elif(STATE=="WHICH"):
             print("[STATE " + str(STATE) + "] " + "NAO, which object I'm looking?" + "\n")
-            #Reset the head position
+            #1- Waiting for a human face and for an estimated pose
+
+            #2- Find the most similar head pose in the teacher_som
+
+            #3- Backward pass from teacher_som to robot_som
+
+            #4- The BMU of robot_som is returned and 
+            # the robot head moves in that direction
             _al_motion_proxy.setAngles("HeadPitch", 0.5, 0.4)
             #_al_motion_proxy.setAngles("HeadYaw", 0.5, 0.3)
-            #Only one landmark found
+
+            #5- Check which landamrks are in the Field-of-view
+            # and says the name of them
             if(len(naomark_list) == 1):
                  id_mark = naomark_list[0][0]                
                  try:
@@ -384,7 +448,33 @@ def main():
                     elif(random_sentence == 2 and VOICE_ENBLED==True): _al_tts_proxy.say("There is nothing around!")
                     which_counter = 0
 
-            #Swith to next state
+            #6-Swith to next state
+            STATE = "FIND"
+
+        #the ICUB says the name of the associated object.
+        elif(STATE=="REWARD"):
+            print("[STATE " + str(STATE) + "] " + "Reward given!" + "\n")
+            #Reset the head position
+            _al_motion_proxy.setAngles("HeadPitch", 0.0, 0.3)
+            _al_motion_proxy.setAngles("HeadYaw", 0.0, 0.3)
+            #Produce a sentence
+            random_sentence = np.random.randint(3)
+            if(random_sentence == 0 and VOICE_ENBLED==True): _al_tts_proxy.say("I am doing better!")
+            elif(random_sentence == 1 and VOICE_ENBLED==True): _al_tts_proxy.say("Very good!")
+            elif(random_sentence == 2 and VOICE_ENBLED==True): _al_tts_proxy.say("Catch it!")
+            STATE = "FIND"
+
+        #the ICUB says the name of the associated object.
+        elif(STATE=="PUNISHMENT"):
+            print("[STATE " + str(STATE) + "] " + "Punishment given!" + "\n")
+            #Reset the head position
+            _al_motion_proxy.setAngles("HeadPitch", 0.0, 0.3)
+            _al_motion_proxy.setAngles("HeadYaw", 0.0, 0.3)
+            #Produce a sentence
+            random_sentence = np.random.randint(3)
+            if(random_sentence == 0 and VOICE_ENBLED==True): _al_tts_proxy.say("I will do better nex time!")
+            elif(random_sentence == 1 and VOICE_ENBLED==True): _al_tts_proxy.say("Sorry, I'm still learning.")
+            elif(random_sentence == 2 and VOICE_ENBLED==True): _al_tts_proxy.say("I miss it!")
             STATE = "FIND"
 
         # QUIT State, unsubscribe from all the proxies
@@ -396,6 +486,7 @@ def main():
             _al_face_proxy.unsubscribe("Test_Face")
             #_al_speechrecognition_proxy.unsubscribe("Test_ASR")
             print("[STATE " + str(STATE) + "] " + "Terminating the script!" + "\n")
+            if(RECORD_VIDEO == True): _al_video_rec_proxy.stopRecording()
             return #QUIT
 
 if __name__ == "__main__":
