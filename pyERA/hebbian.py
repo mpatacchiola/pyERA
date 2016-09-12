@@ -295,7 +295,7 @@ class HebbianConnection:
             it.iternext()
 
 
-    def learning_anti_hebb_rule(self, input_activation, output_activation, learning_rate):
+    def learning_anti_hebb_rule(self, input_activation_matrix, output_activation_matrix, learning_rate):
         """Single step learning using the Anti-Hebbian update rule.
 
         The Anti-Hebbian rule: If two neurons on either side of a synapse (connection) are activated simultaneously, 
@@ -307,19 +307,19 @@ class HebbianConnection:
         if(learning_rate <=0): raise ValueError('hebbian_connection: error the learning rate used for the anti-hebbian rule must be >0')
 
         learning_rate = -learning_rate #The antihebb has negative learning_rate
-        input_activation = input_activation.flatten()
-        output_activation = output_activation.flatten()
+        input_activation_vector = input_activation_matrix.flatten()
+        output_activation_vector = output_activation_matrix.flatten()
 
         it = np.nditer(self._weights_matrix, flags=['multi_index'])
         while not it.finished:
             #print "%d <%s>" % (it[0], it.multi_index)
             #Applying the Hebbian Rule:
-            delta_weight = learning_rate * input_activation[it.multi_index[0]] * output_activation[it.multi_index[1]]
+            delta_weight = learning_rate * input_activation_vector[it.multi_index[0]] * output_activation_vector[it.multi_index[1]]
             self._weights_matrix[it.multi_index[0], it.multi_index[1]] += delta_weight
             it.iternext()
 
 
-    def learning_oja_rule(self, input_activation, output_activation, learning_rate):
+    def learning_oja_rule(self, input_activation_matrix, output_activation_matrix, learning_rate):
         """Single step learning using the Oja's update rule.
 
         The Oja's rule normalizes the weights between 0 and 1, trying  to stop the weights increasing indefinitely
@@ -329,15 +329,15 @@ class HebbianConnection:
         """
         if(learning_rate <=0): raise ValueError('hebbian_connection: error the learning rate used for the oja rule must be >0')
 
-        input_activation = input_activation.flatten()
-        output_activation = output_activation.flatten()
+        input_activation_vector = input_activation_matrix.flatten()
+        output_activation_vector = output_activation_matrix.flatten()
 
         it = np.nditer(self._weights_matrix, flags=['multi_index'])
         while not it.finished:
             #print "%d <%s>" % (it[0], it.multi_index)
             #Applying the Oja's Rule:
-            delta_weight = (learning_rate * input_activation[it.multi_index[0]] * output_activation[it.multi_index[1]]) - \
-                           (learning_rate * output_activation[it.multi_index[1]] * output_activation[it.multi_index[1]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]] )
+            delta_weight = (learning_rate * input_activation_vector[it.multi_index[0]] * output_activation_vector[it.multi_index[1]]) - \
+                           (learning_rate * output_activation_vector[it.multi_index[1]] * output_activation_vector[it.multi_index[1]] * self._weights_matrix[it.multi_index[0], it.multi_index[1]] )
             self._weights_matrix[it.multi_index[0], it.multi_index[1]] += delta_weight
             it.iternext()
 
