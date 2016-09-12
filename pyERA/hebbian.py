@@ -295,7 +295,7 @@ class HebbianConnection:
             it.iternext()
 
 
-    def learning_anti_hebb_rule(self, input_activations, output_activations, learning_rate):
+    def learning_anti_hebb_rule(self, input_activation, output_activation, learning_rate):
         """Single step learning using the Anti-Hebbian update rule.
 
         The Anti-Hebbian rule: If two neurons on either side of a synapse (connection) are activated simultaneously, 
@@ -319,7 +319,7 @@ class HebbianConnection:
             it.iternext()
 
 
-    def learning_oja_rule(self, input_activations, output_activations, learning_rate):
+    def learning_oja_rule(self, input_activation, output_activation, learning_rate):
         """Single step learning using the Oja's update rule.
 
         The Oja's rule normalizes the weights between 0 and 1, trying  to stop the weights increasing indefinitely
