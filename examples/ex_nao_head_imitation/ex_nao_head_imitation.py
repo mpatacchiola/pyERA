@@ -28,11 +28,12 @@ sys.path.insert(1, "./pynaoqi-python2.7-2.1.4.13-linux64")
 from naoqi import ALProxy
 
 #from haar_cascade import haarCascade
-from deepgaze.head_pose_estimation import CnnHeadPoseEstimator
+from head_pose_estimation import CnnHeadPoseEstimator
 import tensorflow as tf
 
 #It requires the pyERA library
 from pyERA.som import Som
+from pyERA.hebbian import HebbianNetwork
 
 def main():
     # The state machine has the following states:
@@ -50,11 +51,12 @@ def main():
     # QUIT: Pressing (q) unsubscribe the proxy and close the script
 
     #Configuration Variables, adjust to taste
+    DEBUG = False
     NAO_IP = "192.168.0.100"
     NAO_PORT = 9559
-    VOICE_ENBLED = False #If True the robot speaks
+    VOICE_ENBLED = True #If True the robot speaks
     RECORD_VOICE = False #If True record all the sentences
-    RECORD_VIDEO = True #If True record a video from the NAO camera
+    RECORD_VIDEO = False #If True record a video from the NAO camera
     STATE = "VOID" #The initial state
     #These two lists contains the landmarks ID
     #and the associated object name. Stick many naomarks
@@ -78,7 +80,7 @@ def main():
             #This counter allows continuing the program flow
             #without calling a sleep
             which_counter = 0 #Counter increased when WHICH is called
-            which_counter_limit = 30 #Limit for the which counter
+            which_counter_limit = 15 #Limit for the which counter
 
             #Init the deepgaze head pose estimator and 
             # launch the graph in a session.
@@ -88,7 +90,34 @@ def main():
             my_head_pose_estimator.allocate_yaw_variables()
             #my_head_pose_estimator.print_allocated_variables()
             my_head_pose_estimator.load_yaw_variables("./cnn_cccdd_30k")
+            yaw_teacher = 0.0 #Init the teacher yaw variable
+            yaw_robot = 0.0
+            pitch_robot = 0.0
 
+            #Init the Self-Organizing Maps
+            print("[STATE " + str(STATE) + "] " + "Self-Organizing Maps init" + "\n")
+            som_robot = Som(matrix_size=3, input_size=1) #the robot SOM is 8x8 matrix
+            print("[STATE " + str(STATE) + "] " + "Loading the network from: som_nao_eight.npz" + "\n")
+            #som_robot.load("som_nao_eight.npz")
+            som_robot.set_unit_weights(-90.0, 0, 0); som_robot.set_unit_weights(-80.0, 0, 1); som_robot.set_unit_weights(-45.0, 0, 2); 
+            som_robot.set_unit_weights(-25.0, 1, 0); som_robot.set_unit_weights(  0.0, 1, 1); som_robot.set_unit_weights(+25.0, 1, 2);
+            som_robot.set_unit_weights(+45.0, 2, 0); som_robot.set_unit_weights(+80.0, 2, 1); som_robot.set_unit_weights(+90.0, 2, 2);
+            #For simplicity we consider only the Yaw angle of the teacher
+            #Instead of a SOM we store the values in a vector. We can have 7 discrete positions:
+            #som_teacher = np.array([-80.0, -45.0, -25.0, 0.0, +25.0, +45.0, +80.0])
+            som_teacher = Som(matrix_size=3, input_size=1)
+            #We set the weights value manually
+            som_teacher.set_unit_weights(-90.0, 0, 0); som_teacher.set_unit_weights(-80.0, 0, 1); som_teacher.set_unit_weights(-45.0, 0, 2); 
+            som_teacher.set_unit_weights(-25.0, 1, 0); som_teacher.set_unit_weights(  0.0, 1, 1); som_teacher.set_unit_weights(+25.0, 1, 2);
+            som_teacher.set_unit_weights(+45.0, 2, 0); som_teacher.set_unit_weights(+80.0, 2, 1); som_teacher.set_unit_weights(+90.0, 2, 2);
+
+            #Init the Hebbian Network
+            hebbian_network = HebbianNetwork("naonet")
+            hebbian_network.add_node("som_robot", (3,3))
+            hebbian_network.add_node("som_teacher", (3,3))
+            hebbian_network.add_connection(0, 1) #connecting som_robot -> som_teacher
+            hebbian_network.print_info()
+          
             #Getting the nao proxies
             print("[STATE " + str(STATE) + "] " + "ALProxy init" + "\n")
             _al_motion_proxy = ALProxy("ALMotion", NAO_IP, int(NAO_PORT))
@@ -207,7 +236,7 @@ def main():
             naomark_vector = _al_memory_proxy.getData("LandmarkDetected")
             naomark_list = list()
             if(naomark_vector and isinstance(naomark_vector, list) and len(naomark_vector) > 0):
-                print("[NAO] Landmark detected!")
+                if(DEBUG==True): print("[NAO] Landmark detected!")
                 #is_landmark_detected = True
                 mark_info_vector = naomark_vector[1]
                 for mark_info in mark_info_vector:
@@ -222,13 +251,13 @@ def main():
                     heading_mark = shape_info[5]
                     #Append the info of each single mark to the list
                     naomark_list.append([id_mark, alpha_mark, beta_mark, size_x_mark, size_y_mark, heading_mark])
-                    print("Mark: " + str(id_mark))
-                    print("Alpha: " + str(alpha_mark))
-                    print("Beta: " + str(beta_mark))
-                    print("SizeX: " + str(size_x_mark))
-                    print("SizeY: " + str(size_y_mark))
-                    print("Heading: " + str(heading_mark))
-                    print("")
+                    if(DEBUG==True): print("Mark: " + str(id_mark))
+                    if(DEBUG==True): print("Alpha: " + str(alpha_mark))
+                    if(DEBUG==True): print("Beta: " + str(beta_mark))
+                    if(DEBUG==True): print("SizeX: " + str(size_x_mark))
+                    if(DEBUG==True): print("SizeY: " + str(size_y_mark))
+                    if(DEBUG==True): print("Heading: " + str(heading_mark))
+                    if(DEBUG==True): print("")
             #else:
                  #print("No naomark detected...")
                  #is_landmark_detected = False
@@ -237,7 +266,7 @@ def main():
             face_data = _al_memory_proxy.getData("FaceDetected", 0)
             if(face_data and isinstance(face_data, list) and len(face_data) > 0):
             #if(len(face_data) > 0):
-                print("[NAO] Face detected!")
+                if(DEBUG==True): print("[NAO] Face detected!")
                 face_vector = face_data[1]
                 face_info = face_vector[0]
                 is_face_detected = True
@@ -245,11 +274,11 @@ def main():
                 beta_face = face_info[0][2]
                 width_face = face_info[0][3]
                 height_face = face_info[0][4]
-                print("Alpha: " + str(alpha_face))
-                print("Beta: " + str(beta_face))
-                print("Width: " + str(width_face))
-                print("Height: " + str(height_face))
-                print("")
+                if(DEBUG==True): print("Alpha: " + str(alpha_face))
+                if(DEBUG==True): print("Beta: " + str(beta_face))
+                if(DEBUG==True): print("Width: " + str(width_face))
+                if(DEBUG==True): print("Height: " + str(height_face))
+                if(DEBUG==True): print("")
                 #Check for anomalies in the data
                 if(alpha_face>1.0 or beta_face>1.0 or width_face>1.0  or height_face>1.0): is_face_detected = False
 
@@ -290,39 +319,15 @@ def main():
                img = np.zeros((cam_h, cam_w))
 
             #Switch to next state
-            STATE = "POSE"
-
-        # Show the image on a window and
-        # draws faces and landmarks
-        elif(STATE=="POSE"):
-            #Evaluate the YAW angle
-            if(is_face_detected == True):
-                #The alpha and beta give the coords
-                # of x2 and y2 not of x1 and y1
-                face_h = int(height_face * cam_w)
-                face_w = int(width_face * cam_w)
-                face_centre_x = -1 * (alpha_face - 0.5)
-                face_centre_x = int(face_centre_x * cam_w)
-                face_centre_y = (beta_face + 0.5)
-                face_centre_y = int(face_centre_y * cam_h)
-                face_x1 = int(face_centre_x - (face_h / 2))
-                face_y1 = int(face_centre_y - (face_h / 2))
-                face_x2 = int(face_centre_x + (face_h / 2))
-                face_y2 = int(face_centre_y + (face_h / 2))
-                #Crop the face from the image
-                if(face_h >= 64):
-                    image_cropped = img[face_y1:face_y2, face_x1:face_x2] # Crop from x, y, w, h
-                    #Pass the croppend face to the Convolutional Neural Network
-                    yaw = my_head_pose_estimator.return_yaw(image_cropped)
-                    #print ("YAW: " + str(yaw[0,0,0]))
-                    print("[STATE " + str(STATE) + "] " + "Yaw = " + str(yaw[0,0,0]) + "\n")
-
-            #Switch to next state
             STATE = "SHOW"
-
+              
         # Show the image on a window and
         # draws faces and landmarks
         elif(STATE=="SHOW"):
+
+            #We use a copy of the original image to write over
+            #in this way the original image is unchanged
+            temp_img = np.copy(img)
 
             #Draw the face rectangle
             if(is_face_detected == True):
@@ -338,7 +343,7 @@ def main():
                 face_y1 = int(face_centre_y - (face_h / 2))
                 face_x2 = int(face_centre_x + (face_h / 2))
                 face_y2 = int(face_centre_y + (face_h / 2))
-                cv2.rectangle(img, 
+                cv2.rectangle(temp_img, 
                              (face_x1, face_y1), 
                              (face_x2, face_y2), 
                              (0, 255, 0),
@@ -364,7 +369,7 @@ def main():
                     radius = int(size_x_mark * cam_w / 2)
                     centre_y_mark += radius #evaluate if necessary
                     #Draw a blue circle on the landmark
-                    cv2.circle(img, 
+                    cv2.circle(temp_img, 
                              (centre_x_mark, centre_y_mark), 
                              radius, 
                              (255, 0, 0),
@@ -377,7 +382,7 @@ def main():
                     #counter += 1
 
             #Show the image and record the video
-            cv2.imshow('image',img)
+            cv2.imshow('image',temp_img)
             if(RECORD_VIDEO == True): video_out.write(img)
             STATE = "KEY"
 
@@ -396,6 +401,9 @@ def main():
             elif key_pressed==110: #n=NAO
                 print("[STATE " + str(STATE) + "] " + "Button (n)ao pressed..." + "\n")
                 STATE = "NAO"
+            elif key_pressed==102: #f=FACE
+                print("[STATE " + str(STATE) + "] " + "Button (f)ace pressed..." + "\n")
+                STATE = "FACE"
             elif key_pressed==114: #r=REWARD
                 print("[STATE " + str(STATE) + "] " + "Button (r)eward pressed..." + "\n")
                 STATE = "REWARD"
@@ -406,9 +414,9 @@ def main():
                 print("[STATE " + str(STATE) + "] " + "Button (w)hich pressed..." + "\n")
                 which_counter = 0                
                 STATE = "WHICH"
-            elif key_pressed==104: #w=WHICH object I'm looking
+            elif key_pressed==104: #h=HELP
                 print("[STATE " + str(STATE) + "] " + "Button (h)elp pressed..." + "\n")
-                print("(q)uit, (n)ao, (g)ood, (b)ad, (w)hich, (h)elp" + "\n")
+                print("(q)uit, (n)ao, (r)eward, (p)unishment, (f)ace, (w)hich, (h)elp" + "\n")
                 STATE = "FIND"
             elif key_pressed==-1: #Nothing
                 STATE = "COUNTER"
@@ -434,22 +442,74 @@ def main():
             elif(random_sentence == 2 and VOICE_ENBLED==True): _al_tts_proxy.say("Yes?")
             STATE = "FIND"
 
+
+        # Find the HEAD POSE given a FACE
+        # it uses the deepgaze library
+        elif(STATE=="FACE"):
+            #Evaluate the YAW angle
+            yaw_teacher = np.random.uniform(low=-90.0, high=90.0) #TODO remove this line
+            '''
+            if(is_face_detected == False):
+                print("[STATE " + str(STATE) + "] " + "Head Pose Estimation: Failed because no face is present" + "\n")
+            if(is_face_detected == True):
+                #The alpha and beta give the coords
+                # of x2 and y2 not of x1 and y1
+                face_h = int(height_face * cam_w)
+                face_w = int(width_face * cam_w)
+                face_centre_x = -1 * (alpha_face - 0.5)
+                face_centre_x = int(face_centre_x * cam_w)
+                face_centre_y = (beta_face + 0.5)
+                face_centre_y = int(face_centre_y * cam_h)
+                face_x1 = int(face_centre_x - (face_h / 2))
+                face_y1 = int(face_centre_y - (face_h / 2))
+                face_x2 = int(face_centre_x + (face_h / 2))
+                face_y2 = int(face_centre_y + (face_h / 2))
+                #Crop the face from the image
+                if(face_h >= 64):
+                    image_cropped = img[face_y1:face_y2, face_x1:face_x2] # Crop from x, y, w, h
+                    image_resized = cv2.resize(image_cropped, (64, 64), interpolation = cv2.INTER_AREA)
+                    #Show the cropped face
+                    if(DEBUG==True): cv2.imshow('face', image_resized)
+                    #Pass the croppend face to the Convolutional Neural Network
+                    yaw_vector = my_head_pose_estimator.return_yaw(image_resized)
+                    yaw_teacher = yaw_vector[0,0,0] #Set the global variable
+                    print("[STATE " + str(STATE) + "] " + "Head Pose Estimation: Yaw = " + str(yaw_vector[0,0,0]) + "\n")
+                    #if(VOICE_ENBLED==True): _al_tts_proxy.say("Catch it!")
+                else:
+                    print("[STATE " + str(STATE) + "] " + "Head Pose Estimation: Failed because image is less than 64x64 pixels" + "\n")
+            '''
+            #Switch to next state
+            STATE = "FIND"
+
         #Asking to NAO to estimate the Teacher head pose
         #and to generate a head movement from the Hebbian net.
         #If there is a landmark close to the center of the camera
         #the NAO says the name of the associated object.
+        #Before calling this state you have to call the state "FACE"
+        #which set the SOMs variables.
         elif(STATE=="WHICH"):
             print("[STATE " + str(STATE) + "] " + "NAO, which object I'm looking?" + "\n")
-            #1- Waiting for a human face and for an estimated pose
 
-            #2- Find the most similar head pose in the teacher_som
+            #1- Find the most similar head pose in the som_teacher
+            #som_teacher_similarity_matrix = som_teacher.return_similarity_matrix(yaw_teacher)
+            som_teacher_activation_matrix = som_teacher.return_activation_matrix(yaw_teacher)
+            som_teacher_bmu_value = som_teacher.return_BMU_weights(yaw_teacher)
+            print("[STATE " + str(STATE) + "] " + "CNN Yaw: " + str(yaw_teacher) + "; SOM Yaw: " + str(som_teacher_bmu_value) + "\n")
 
-            #3- Backward pass from teacher_som to robot_som
-
-            #4- The BMU of robot_som is returned and 
-            # the robot head moves in that direction
-            _al_motion_proxy.setAngles("HeadPitch", 0.5, 0.4)
-            #_al_motion_proxy.setAngles("HeadYaw", 0.5, 0.3)
+            #2- Backward pass from som_teacher to som_robot in the Hebbian Network
+            hebbian_network.set_node_activations(1, som_teacher_activation_matrix)
+            som_robot_hebbian_matrix = hebbian_network.compute_node_activations(0, set_node_matrix=False)
+            max_row, max_col = np.unravel_index(som_robot_hebbian_matrix.argmax(), som_robot_hebbian_matrix.shape)
+            print("Robot Hebbian Matrix: ")
+            print(som_robot_hebbian_matrix)
+            print("[STATE " + str(STATE) + "] " + "The Robot SOM activated unit is (" + str(max_row) + ", " + str(max_col) + ") with value: " + str(som_robot.get_unit_weights(max_row,max_col)) + "\n")
+            print("")
+            #3- The BMU of robot_som is returned and the robot head moves in that direction
+            som_robot_bmu_weights = som_robot.get_unit_weights(max_row, max_col)
+            yaw_robot = som_robot_bmu_weights[0] * (np.pi/180.0)
+            pitch_robot = 0 #som_robot_bmu_weights[1] * (np.pi/180.0)
+            _al_motion_proxy.setAngles("HeadYaw", yaw_robot, 0.2)
+            _al_motion_proxy.setAngles("HeadPitch", pitch_robot, 0.2)
 
             #5- Check which landamrks are in the Field-of-view
             # and says the name of them
@@ -491,9 +551,32 @@ def main():
             #6-Swith to next state
             STATE = "FIND"
 
-        #the ICUB says the name of the associated object.
+        #the NAO says the name of the associated object.
         elif(STATE=="REWARD"):
+
+            print("[STATE " + str(STATE) + "] " + "Giving the Reward..." + "\n")
+
+            #1- Compute the real distance_matrix
+            input_vector = np.array([yaw_robot])
+            som_robot_similarity_matrix = som_robot.return_similarity_matrix(input_vector)
+            input_vector = np.array([yaw_teacher])
+            som_teacher_activation_matrix = som_teacher.return_activation_matrix(input_vector)
+
+            #2- Set the distance matrices as activation of the Hebbian Network
+            print("Robot Activation Matrix: ")
+            print(som_robot_similarity_matrix)
+            print("")
+            print("Teacher Activation Matrix: ")
+            print(som_teacher_activation_matrix)
+            print("")
+            hebbian_network.set_node_activations(0, som_robot_similarity_matrix)
+            hebbian_network.set_node_activations(1, som_teacher_activation_matrix)
+
+            #3- Positive Learning!
+            hebbian_network.learning(learning_rate=0.3, rule="hebb")
+
             print("[STATE " + str(STATE) + "] " + "Reward given!" + "\n")
+
             #Reset the head position
             _al_motion_proxy.setAngles("HeadPitch", 0.0, 0.3)
             _al_motion_proxy.setAngles("HeadYaw", 0.0, 0.3)
@@ -506,7 +589,31 @@ def main():
 
         #the ICUB says the name of the associated object.
         elif(STATE=="PUNISHMENT"):
+
+            print("[STATE " + str(STATE) + "] " + "Giving the Punishment..." + "\n")
+
+            #1- Compute the real distance_matrix
+            input_vector = np.array([yaw_robot])
+            som_robot_similarity_matrix = som_robot.return_similarity_matrix(input_vector)
+            input_vector = np.array([yaw_teacher])
+            #som_teacher_similarity_matrix = som_teacher.return_similarity_matrix(input_vector)
+            som_teacher_activation_matrix = som_teacher.return_activation_matrix(input_vector)
+
+            #2- Set the distance matrices as activation of the Hebbian Network
+            print("Robot Activation Matrix: ")
+            print(som_robot_similarity_matrix)
+            print("")
+            print("Teacher Activation Matrix: ")
+            print(som_teacher_activation_matrix)
+            print("")
+            hebbian_network.set_node_activations(0, som_robot_similarity_matrix)
+            hebbian_network.set_node_activations(1, som_teacher_activation_matrix)
+
+            #3- Negative Learning!
+            hebbian_network.learning(learning_rate=0.3, rule="antihebb")
+
             print("[STATE " + str(STATE) + "] " + "Punishment given!" + "\n")
+
             #Reset the head position
             _al_motion_proxy.setAngles("HeadPitch", 0.0, 0.3)
             _al_motion_proxy.setAngles("HeadYaw", 0.0, 0.3)

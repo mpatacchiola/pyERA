@@ -45,7 +45,7 @@ class HebbianNetwork:
         rows = shape[0]
         cols = shape[1]
         if(rows <= 0 or cols<=0): raise ValueError('HebbianNetwork: the widht and the height cannot be negative or null.')
-        temp_maptrix = np.ones((rows, cols))
+        temp_maptrix = np.zeros((rows, cols))
         dict = {'Name': name, 'Rows': rows, 'Cols': cols, 'Matrix': temp_maptrix}
         self._node_list.append(dict.copy()) #append a swallow copy of the dict
 
@@ -68,7 +68,6 @@ class HebbianNetwork:
 
         #Code for multiple elements removal
         self._connection_list = [v for i, v in enumerate(self._connection_list) if i not in remove_list]
-
 
     def set_node_activations(self, index, matrix):
         """Set the activation matrix associated with a node.
@@ -214,7 +213,7 @@ class HebbianNetwork:
 
         first_shape = (self._node_list[first_node_index]['Rows'], self._node_list[first_node_index]['Cols'])
         second_shape = (self._node_list[second_node_index]['Rows'], self._node_list[second_node_index]['Cols'])
-        temp_connection = HebbianConnection(first_shape, second_shape)
+        temp_connection = HebbianConnection(first_shape, second_shape, add_gaussian_noise=True)
         dict = {'Start': first_node_index, 'End': second_node_index, 'Connection': temp_connection }
         self._connection_list.append(dict.copy())
         return True
@@ -252,7 +251,7 @@ class HebbianConnection:
     between two nodes.
     @param rule it specifies the learning rule associted with this connection (hebb, antihebb, oja)
     """
-    def __init__(self, input_shape, output_shape):
+    def __init__(self, input_shape, output_shape, add_gaussian_noise=False):
         """Initialize the hebbian connections between two networks.
 
         The weights of the connection are adjusted using a learning rule.
@@ -271,6 +270,11 @@ class HebbianConnection:
         cols = self._output_shape[0] * self._output_shape[1]
         self._weights_matrix = np.zeros((rows, cols))
 
+        #Add gaussian noise to each element of the matrix
+        if(add_gaussian_noise==True):
+            for row in range(0, rows):
+                for col in range(0, cols):
+                    self._weights_matrix[row,col] = np.random.normal(loc=0.0, scale=0.01)
 
     def learning_hebb_rule(self, input_activation_matrix, output_activation_matrix, learning_rate):
         """Single step learning using the Hebbian update rule.
