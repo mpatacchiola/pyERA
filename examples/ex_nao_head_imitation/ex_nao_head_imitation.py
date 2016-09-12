@@ -28,10 +28,11 @@ sys.path.insert(1, "./pynaoqi-python2.7-2.1.4.13-linux64")
 from naoqi import ALProxy
 
 #from haar_cascade import haarCascade
+from deepgaze.head_pose_estimation import CnnHeadPoseEstimator
+import tensorflow as tf
 
 #It requires the pyERA library
 from pyERA.som import Som
-from pyERA.utils import ExponentialDecay
 
 def main():
     # The state machine has the following states:
@@ -51,7 +52,7 @@ def main():
     #Configuration Variables, adjust to taste
     NAO_IP = "192.168.0.100"
     NAO_PORT = 9559
-    VOICE_ENBLED = True #If True the robot speaks
+    VOICE_ENBLED = False #If True the robot speaks
     RECORD_VOICE = False #If True record all the sentences
     RECORD_VIDEO = True #If True record a video from the NAO camera
     STATE = "VOID" #The initial state
@@ -78,6 +79,15 @@ def main():
             #without calling a sleep
             which_counter = 0 #Counter increased when WHICH is called
             which_counter_limit = 30 #Limit for the which counter
+
+            #Init the deepgaze head pose estimator and 
+            # launch the graph in a session.
+            print("[STATE " + str(STATE) + "] " + "Deepgaze init" + "\n")
+            sess = tf.Session()
+            my_head_pose_estimator = CnnHeadPoseEstimator(sess)
+            my_head_pose_estimator.allocate_yaw_variables()
+            #my_head_pose_estimator.print_allocated_variables()
+            my_head_pose_estimator.load_yaw_variables("./cnn_cccdd_30k")
 
             #Getting the nao proxies
             print("[STATE " + str(STATE) + "] " + "ALProxy init" + "\n")
@@ -280,11 +290,41 @@ def main():
                img = np.zeros((cam_h, cam_w))
 
             #Switch to next state
+            STATE = "POSE"
+
+        # Show the image on a window and
+        # draws faces and landmarks
+        elif(STATE=="POSE"):
+            #Evaluate the YAW angle
+            if(is_face_detected == True):
+                #The alpha and beta give the coords
+                # of x2 and y2 not of x1 and y1
+                face_h = int(height_face * cam_w)
+                face_w = int(width_face * cam_w)
+                face_centre_x = -1 * (alpha_face - 0.5)
+                face_centre_x = int(face_centre_x * cam_w)
+                face_centre_y = (beta_face + 0.5)
+                face_centre_y = int(face_centre_y * cam_h)
+                face_x1 = int(face_centre_x - (face_h / 2))
+                face_y1 = int(face_centre_y - (face_h / 2))
+                face_x2 = int(face_centre_x + (face_h / 2))
+                face_y2 = int(face_centre_y + (face_h / 2))
+                #Crop the face from the image
+                if(face_h >= 64):
+                    image_cropped = img[face_y1:face_y2, face_x1:face_x2] # Crop from x, y, w, h
+                    #Pass the croppend face to the Convolutional Neural Network
+                    yaw = my_head_pose_estimator.return_yaw(image_cropped)
+                    #print ("YAW: " + str(yaw[0,0,0]))
+                    print("[STATE " + str(STATE) + "] " + "Yaw = " + str(yaw[0,0,0]) + "\n")
+
+            #Switch to next state
             STATE = "SHOW"
 
         # Show the image on a window and
         # draws faces and landmarks
         elif(STATE=="SHOW"):
+
+            #Draw the face rectangle
             if(is_face_detected == True):
                 #The alpha and beta give the coords
                 # of x2 and y2 not of x1 and y1
