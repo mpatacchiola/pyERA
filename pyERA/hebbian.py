@@ -16,7 +16,7 @@ class HebbianNetwork:
     The Hebbian Network is considered as an integrator of nodes.
     The nodes are references, some kind of abstract labels.
     Each node can be a Self-Organizing Map, the output vector of
-    another kind of artificial network or the output of a generic system.
+    another type of artificial network or the output of a generic system.
     In the first phase the network can be organised step by step adding and removing nodes.
     In a second phase it is possible to connect nodes using Hebbian Connections.
     In a third phase it is possible to compute the activation of each node.
@@ -40,12 +40,12 @@ class HebbianNetwork:
         To access the node properties it is necessary to have
         the index associated to it.
         @param name the name of the node (it is different from the index)
-        @param shape the shape is a list that indentifies num rows and num cols
+        @param shape the shape is a list that indentifies total rows and num cols
         """
         rows = shape[0]
         cols = shape[1]
         if(rows <= 0 or cols<=0): raise ValueError('HebbianNetwork: the widht and the height cannot be negative or null.')
-        temp_maptrix = np.zeros((rows, cols))
+        temp_maptrix = np.ones((rows, cols))
         dict = {'Name': name, 'Rows': rows, 'Cols': cols, 'Matrix': temp_maptrix}
         self._node_list.append(dict.copy()) #append a swallow copy of the dict
 
@@ -259,7 +259,7 @@ class HebbianConnection:
         @param input_shape, it can be a square matrix or a numpy vector. The vector must be initialized as a 1 row (or 1 column) numpy matrix.
         @param output_shape, it can be a square matrix or a numpy vector. The vector must be initialized as a 1 row (or 1 column) numpy matrix.
         """
-        if(len(input_shape) != 2 or len(output_shape) != 2): raise ValueError('hebbian_connection: error the input-outpu matrix shape is != 2')
+        if(len(input_shape) != 2 or len(output_shape) != 2): raise ValueError('HebbianConnection: error the input-outpu matrix shape is != 2')
 
         self._input_shape = input_shape
         self._output_shape = output_shape
