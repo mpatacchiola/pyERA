@@ -54,7 +54,7 @@ def main():
     DEBUG = False
     NAO_IP = "192.168.0.100"
     NAO_PORT = 9559
-    VOICE_ENBLED = True #If True the robot speaks
+    VOICE_ENBLED = False #If True the robot speaks
     RECORD_VOICE = False #If True record all the sentences
     RECORD_VIDEO = False #If True record a video from the NAO camera
     STATE = "VOID" #The initial state
@@ -81,6 +81,7 @@ def main():
             #without calling a sleep
             which_counter = 0 #Counter increased when WHICH is called
             which_counter_limit = 15 #Limit for the which counter
+            learning_rate = 0.1
 
             #Init the deepgaze head pose estimator and 
             # launch the graph in a session.
@@ -99,17 +100,17 @@ def main():
             som_robot = Som(matrix_size=3, input_size=1) #the robot SOM is 8x8 matrix
             print("[STATE " + str(STATE) + "] " + "Loading the network from: som_nao_eight.npz" + "\n")
             #som_robot.load("som_nao_eight.npz")
-            som_robot.set_unit_weights(-90.0, 0, 0); som_robot.set_unit_weights(-80.0, 0, 1); som_robot.set_unit_weights(-45.0, 0, 2); 
-            som_robot.set_unit_weights(-25.0, 1, 0); som_robot.set_unit_weights(  0.0, 1, 1); som_robot.set_unit_weights(+25.0, 1, 2);
-            som_robot.set_unit_weights(+45.0, 2, 0); som_robot.set_unit_weights(+80.0, 2, 1); som_robot.set_unit_weights(+90.0, 2, 2);
+            som_robot.set_unit_weights(-80.0, 0, 0); som_robot.set_unit_weights(-60.0, 0, 1); som_robot.set_unit_weights(-40.0, 0, 2); 
+            som_robot.set_unit_weights(-20.0, 1, 0); som_robot.set_unit_weights(  0.0, 1, 1); som_robot.set_unit_weights(+20.0, 1, 2);
+            som_robot.set_unit_weights(+40.0, 2, 0); som_robot.set_unit_weights(+60.0, 2, 1); som_robot.set_unit_weights(+80.0, 2, 2);
             #For simplicity we consider only the Yaw angle of the teacher
             #Instead of a SOM we store the values in a vector. We can have 7 discrete positions:
             #som_teacher = np.array([-80.0, -45.0, -25.0, 0.0, +25.0, +45.0, +80.0])
             som_teacher = Som(matrix_size=3, input_size=1)
             #We set the weights value manually
-            som_teacher.set_unit_weights(-90.0, 0, 0); som_teacher.set_unit_weights(-80.0, 0, 1); som_teacher.set_unit_weights(-45.0, 0, 2); 
-            som_teacher.set_unit_weights(-25.0, 1, 0); som_teacher.set_unit_weights(  0.0, 1, 1); som_teacher.set_unit_weights(+25.0, 1, 2);
-            som_teacher.set_unit_weights(+45.0, 2, 0); som_teacher.set_unit_weights(+80.0, 2, 1); som_teacher.set_unit_weights(+90.0, 2, 2);
+            som_teacher.set_unit_weights(-80.0, 0, 0); som_teacher.set_unit_weights(-60.0, 0, 1); som_teacher.set_unit_weights(-40.0, 0, 2); 
+            som_teacher.set_unit_weights(-20.0, 1, 0); som_teacher.set_unit_weights(  0.0, 1, 1); som_teacher.set_unit_weights(+20.0, 1, 2);
+            som_teacher.set_unit_weights(+40.0, 2, 0); som_teacher.set_unit_weights(+60.0, 2, 1); som_teacher.set_unit_weights(+80.0, 2, 2);
 
             #Init the Hebbian Network
             hebbian_network = HebbianNetwork("naonet")
@@ -506,13 +507,15 @@ def main():
             print("")
             #3- The BMU of robot_som is returned and the robot head moves in that direction
             som_robot_bmu_weights = som_robot.get_unit_weights(max_row, max_col)
-            yaw_robot = som_robot_bmu_weights[0] * (np.pi/180.0)
-            pitch_robot = 0 #som_robot_bmu_weights[1] * (np.pi/180.0)
-            _al_motion_proxy.setAngles("HeadYaw", yaw_robot, 0.2)
-            _al_motion_proxy.setAngles("HeadPitch", pitch_robot, 0.2)
+            yaw_robot = som_robot_bmu_weights[0]
+            yaw_robot_radians =  yaw_robot * (np.pi/180.0)
+            pitch_robot_radians = 0 #som_robot_bmu_weights[1] * (np.pi/180.0)
+            _al_motion_proxy.setAngles("HeadYaw", yaw_robot_radians, 0.2)
+            _al_motion_proxy.setAngles("HeadPitch", pitch_robot_radians, 0.2)
 
             #5- Check which landamrks are in the Field-of-view
             # and says the name of them
+            '''
             if(len(naomark_list) == 1):
                  id_mark = naomark_list[0][0]                
                  try:
@@ -547,6 +550,7 @@ def main():
                     elif(random_sentence == 1 and VOICE_ENBLED==True): _al_tts_proxy.say("No objects here!")
                     elif(random_sentence == 2 and VOICE_ENBLED==True): _al_tts_proxy.say("There is nothing around!")
                     which_counter = 0
+            '''
 
             #6-Swith to next state
             STATE = "FIND"
@@ -557,25 +561,28 @@ def main():
             print("[STATE " + str(STATE) + "] " + "Giving the Reward..." + "\n")
 
             #1- Compute the real distance_matrix
+            print()
             input_vector = np.array([yaw_robot])
-            som_robot_similarity_matrix = som_robot.return_similarity_matrix(input_vector)
+            #som_robot_similarity_matrix = som_robot.return_similarity_matrix(input_vector)
+            som_robot_activation_matrix = som_robot.return_activation_matrix(input_vector)
             input_vector = np.array([yaw_teacher])
             som_teacher_activation_matrix = som_teacher.return_activation_matrix(input_vector)
+            #som_teacher_similarity_matrix = som_teacher.return_similarity_matrix(input_vector)
 
             #2- Set the distance matrices as activation of the Hebbian Network
-            print("Robot Activation Matrix: ")
-            print(som_robot_similarity_matrix)
-            print("")
-            print("Teacher Activation Matrix: ")
-            print(som_teacher_activation_matrix)
-            print("")
-            hebbian_network.set_node_activations(0, som_robot_similarity_matrix)
+            #print("Robot Activation Matrix: ")
+            #print(som_robot_similarity_matrix)
+            #print("")
+            #print("Teacher Activation Matrix: ")
+            #print(som_teacher_activation_matrix)
+            #print("")
+            hebbian_network.set_node_activations(0, som_robot_activation_matrix)
             hebbian_network.set_node_activations(1, som_teacher_activation_matrix)
 
             #3- Positive Learning!
-            hebbian_network.learning(learning_rate=0.3, rule="hebb")
+            hebbian_network.learning(learning_rate=0.1, rule="hebb")
 
-            print("[STATE " + str(STATE) + "] " + "Reward given!" + "\n")
+            print("[STATE " + str(STATE) + "] " + "Reward given for Angles: " + str(yaw_robot) + "(Robot); " + str(yaw_teacher) + "(Teacher)" + "\n")
 
             #Reset the head position
             _al_motion_proxy.setAngles("HeadPitch", 0.0, 0.3)
@@ -587,32 +594,35 @@ def main():
             elif(random_sentence == 2 and VOICE_ENBLED==True): _al_tts_proxy.say("Catch it!")
             STATE = "FIND"
 
-        #the ICUB says the name of the associated object.
+        #The Punishment can be obtained by hebbian learning
+        #Giving as masks the similarity and the activation matrix
         elif(STATE=="PUNISHMENT"):
 
             print("[STATE " + str(STATE) + "] " + "Giving the Punishment..." + "\n")
 
             #1- Compute the real distance_matrix
             input_vector = np.array([yaw_robot])
-            som_robot_similarity_matrix = som_robot.return_similarity_matrix(input_vector)
+            #som_robot_similarity_matrix = som_robot.return_similarity_matrix(input_vector)
+            #som_robot_normalized_distance_matrix = som_teacher.return_normalized_distance_matrix(input_vector)
+            som_robot_activation_matrix = som_robot.return_activation_matrix(input_vector)
             input_vector = np.array([yaw_teacher])
             #som_teacher_similarity_matrix = som_teacher.return_similarity_matrix(input_vector)
             som_teacher_activation_matrix = som_teacher.return_activation_matrix(input_vector)
 
             #2- Set the distance matrices as activation of the Hebbian Network
-            print("Robot Activation Matrix: ")
-            print(som_robot_similarity_matrix)
-            print("")
-            print("Teacher Activation Matrix: ")
-            print(som_teacher_activation_matrix)
-            print("")
-            hebbian_network.set_node_activations(0, som_robot_similarity_matrix)
+            #print("Robot Normalised Distance Matrix: ")
+            #print(som_robot_normalized_distance_matrix)
+            #print("")
+            #print("Teacher Similarity Matrix: ")
+            #print(som_teacher_similarity_matrix)
+            #print("")
+            hebbian_network.set_node_activations(0, som_robot_activation_matrix)
             hebbian_network.set_node_activations(1, som_teacher_activation_matrix)
 
             #3- Negative Learning!
-            hebbian_network.learning(learning_rate=0.3, rule="antihebb")
+            hebbian_network.learning(learning_rate=0.1, rule="antihebb")
 
-            print("[STATE " + str(STATE) + "] " + "Punishment given!" + "\n")
+            print("[STATE " + str(STATE) + "] " + "Punishement given for Angles: " + str(yaw_robot) + "(Robot); " + str(yaw_teacher) + "(Teacher)" + "\n")
 
             #Reset the head position
             _al_motion_proxy.setAngles("HeadPitch", 0.0, 0.3)
