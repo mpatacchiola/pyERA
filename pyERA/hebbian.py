@@ -268,13 +268,12 @@ class HebbianConnection:
         #The number of cols in weights_matrix is equal to the number of elements (rows*cols) in output_matrix
         rows = self._input_shape[0] * self._input_shape[1]
         cols = self._output_shape[0] * self._output_shape[1]
-        self._weights_matrix = np.zeros((rows, cols))
 
         #Add gaussian noise to each element of the matrix
         if(add_gaussian_noise==True):
-            for row in range(0, rows):
-                for col in range(0, cols):
-                    self._weights_matrix[row,col] = np.random.normal(loc=0.0, scale=0.01)
+            self._weights_matrix = np.random.normal(loc=0.0, scale=0.01, (rows, cols))
+        else:
+            self._weights_matrix = np.zeros((rows, cols))
 
     def learning_hebb_rule(self, input_activation_matrix, output_activation_matrix, learning_rate):
         """Single step learning using the Hebbian update rule.
