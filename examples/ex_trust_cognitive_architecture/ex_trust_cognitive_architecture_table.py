@@ -6,6 +6,37 @@ import numpy as np
 import os 
 import time
 
+# General Algorithm Description
+# 1- To the agent is presented an object and a label (current state).
+# 2- An informant suggest a possible action (accept or reject the label).
+# 3- The agent take an action considering is current state-action table
+# 4- (External) New state and reward obtained from the environment
+# 5- (Intrinsic) The informant_reputation is updated: agent_action, agent_confidence, informant_action
+# 6- (Intrinsic) The Cost is estimated: current_state, agent_action, agent_confidence, informant_action, informant_reputation
+# 7- The utility table is updated using: preious_state, current_state, cost, reward
+# 8- The actor table is updated using the delta from the critic
+
+#Informant reputation is evaluated considering: agent_action, agent_confidence, informant_action
+#If the confidence of the agent is high and the action suggested is different from the action taken
+#then the informant is evaluated as unreliable and a counter is incremeneted.
+#The reputation counter is considered separated by the Cost function. Harris et al. have showed
+#that 3yo children can estimate the reliability of the informant but they cannot estimate the
+#cost of following the informant suggestion. This is in accordance with our model where the two
+#entities are separated.
+#
+#Intrinsic environment: evaluates the cost of taking an action
+#Trusting an unreliable informant has a cost, because the child will store an information which is not useful.
+#This mechanism can be considered part of a planning module (e.g. prefrontal cortex).
+#The cost function C can be defined as a function that takes as input: current_state, agent_action, agent_confidence, informant_action, informant_reputation.
+#The cost function evaluates what's the cost of having taken an action in state S given the informant advice .
+#The output of the function C is a real number representing the COST of taking that action given the informant suggestion.
+#This table can be represented through a table or can be approximated through a function approximator (e.g. neural network)
+#
+#The actor architecture is a table of state-action pairs. 
+#When the child has to give a label for an object the policy must be used and not the utility table.
+#The most common associated label to a visual object can be estimated setting the SOM action node to ACCEPT and then
+#computing the activation of the vocabulary unit. The argmax is the value we want.
+
 
 
 def softmax(x):
@@ -55,6 +86,7 @@ def training(dataset, actor_matrix, critic_vector, informant_vector, tot_images,
       child_knowledge = np.random.choice(2, 1, p=bn_child_knowledge_distribution)
       informant_knowledge = np.random.choice(2, 1, p=informant_knowledge_distribution)
 
+      #The Bayesian Network is part of the intrinsic environment.
       #Bayesian Network - Conditional Probability Table
       #child_knowledge: 0=non-knowledgeable, 1=knowledgeable
       #informant_knowledge: 0=non-knowledgeable, 1=knowledgeable
@@ -159,9 +191,6 @@ def main():
     print("####### FAMILIARISATION ########")
     dataset_familiarisation = [(dict_images['CUP'], dict_labels['cup'], 1, 1), (dict_images['CUP'], dict_labels['book'], 2, 1),
                                (dict_images['CUP'], dict_labels['cup'], 1, 1), (dict_images['CUP'], dict_labels['book'], 2, 1),
-                               (dict_images['CUP'], dict_labels['cup'], 1, 1), (dict_images['CUP'], dict_labels['book'], 2, 1),
-                               (dict_images['CUP'], dict_labels['cup'], 1, 1), (dict_images['CUP'], dict_labels['book'], 2, 1),
-                               (dict_images['CUP'], dict_labels['cup'], 1, 1), (dict_images['CUP'], dict_labels['book'], 2, 1),
                                (dict_images['BOOK'], dict_labels['book'], 1, 1), (dict_images['BOOK'], dict_labels['cup'], 2, 1),
                                (dict_images['BOOK'], dict_labels['book'], 1, 1), (dict_images['BOOK'], dict_labels['cup'], 2, 1)]
   
@@ -178,18 +207,24 @@ def main():
     print("")
     print("####### ASK TEST ########")
     #The experimenter ask to the agent the name of the object
-    child_answer_distribution = critic_vector[0,6:]
+    #child_answer_distribution = critic_vector[0,6:]
+    #This is the equivalent of setting to 1 the unit ACCEPT of the action layer of the SOM
+    #And to activate the BMU of the Visual SOM. The computation returns the argmax.
+    child_answer_distribution = actor_matrix[1,6:] #second row (accept) and columns for BALL
     print("Child answer distribution: " + str(child_answer_distribution))
     child_answer_distribution = softmax(child_answer_distribution)
     print("Child answer softmax: " + str(child_answer_distribution))
-    #child_answer = np.random.choice(3, 1, p=child_answer_distribution)
-    if(child_answer_distribution[1] == child_answer_distribution[2]):
-        child_answer = np.random.randint(1, 3)
-    else:
-        child_answer = np.argmax(child_answer_distribution)
+    child_answer = np.random.choice(3, 1, p=child_answer_distribution)
+    #if(child_answer_distribution[1] == child_answer_distribution[2]):
+        #child_answer = np.random.randint(1, 3)
+    #else:
+        #child_answer = np.argmax(child_answer_distribution)
     if(child_answer==0): print("Child answer: cup")
     elif(child_answer==1): print("Child answer: book")
     elif(child_answer==2): print("Child answer: ball")
+
+
+
 
 
 if __name__ == "__main__":
