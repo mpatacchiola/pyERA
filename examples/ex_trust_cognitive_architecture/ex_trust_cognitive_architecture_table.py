@@ -9,9 +9,9 @@ import time
 # General Algorithm Description
 # 1- To the agent is presented an object and a label (current state).
 # 2- An informant suggest a possible action (accept or reject the label).
-# 3- The agent take an action considering is current state-action table
+# 3- The agent take an action (with softmax) considering is current state-action table
 # 4- (External) New state and reward obtained from the environment
-# 5- (Intrinsic) The informant_reputation is updated: agent_action, agent_confidence, informant_action
+# 5- (Intrinsic) The informant_reputation is updated: agent_action, agent_confidence, informant_action, reward
 # 6- (Intrinsic) The Cost is estimated: current_state, agent_action, agent_confidence, informant_action, informant_reputation
 # 7- The utility table is updated using: preious_state, current_state, cost, reward
 # 8- The actor table is updated using the delta from the critic
