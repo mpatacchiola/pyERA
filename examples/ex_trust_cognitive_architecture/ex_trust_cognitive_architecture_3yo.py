@@ -47,7 +47,6 @@ def return_best_choice(answer_distribution):
         counter += 1
 
     if(len(index_list) == 1): return int(index_list[0])
-    #elif(len(index_list) > 1): return int(np.random.choice(tot_images, 1, p=answer_distribution))
     else: return int(np.random.choice(index_list, 1)) #uniform sampling
 
 def softmax(x):
@@ -58,7 +57,7 @@ def softmax(x):
     '''
     return np.exp(x - np.max(x)) / np.sum(np.exp(x - np.max(x)))
 
-def training(dataset, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions):
+def training(dataset, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions, verbose=False):
     '''Train the actor using Intrinsic Motivated Reinforcement Learning
 
     General Algorithm Description:
@@ -115,45 +114,49 @@ def training(dataset, actor_matrix, critic_vector, informant_vector, tot_images,
       #Check if child and informant agree
       if(child_action == informant_action): do_actions_agree = True
       else: do_actions_agree = False
-      #Increment the counter in the informant_vector
+      #Increment the counter in the informant_vector.
+      #Here we update the counter distribtuion only if
+      #the child is confident, because it is only in that
+      #case that the child can say if the informant is
+      #reliable or not.
       if(do_actions_agree==False and child_confidence==1):
           informant_vector[informant_index][0] += 1 #unreliable
       elif(do_actions_agree==True and child_confidence==1):
           informant_vector[informant_index][1] += 1 #reliable
       elif(do_actions_agree==False and child_confidence==0):
-          informant_vector[informant_index][1] += 1 #reliable
-          informant_vector[informant_index][0] += 1 #unreliable
+          informant_vector[informant_index][1] += 0 #reliable
+          informant_vector[informant_index][0] += 0 #unreliable
       elif(do_actions_agree==True and child_confidence==0):
-          informant_vector[informant_index][1] += 1 #reliable
-          informant_vector[informant_index][0] += 1 #unreliable
+          informant_vector[informant_index][1] += 0 #reliable
+          informant_vector[informant_index][0] += 0 #unreliable
       else: 
           raise ValueError("ERROR: anomaly in the IF condition for informant_vector update")
       #Using the informant_vector given as input it estimates the reputation of the informant
       informant_reputation_distribution = np.true_divide(informant_vector[informant_index], np.sum(informant_vector[informant_index]))
-      #informant_reputation = np.random.choice(2, 1, p=informant_reputation_distribution)
-      informant_reputation = np.argmax(informant_reputation_distribution)
+      informant_reputation = np.random.choice(2, 1, p=informant_reputation_distribution)
+      #informant_reputation = np.argmax(informant_reputation_distribution)
 
       #6- (Intrinsic) The Cost is estimated: current_state, agent_action, agent_confidence, informant_action, informant_reputation
       #child_confidence: 0=non-knowledgeable, 1=knowledgeable
       #informant_reputation: 0=non-knowledgeable, 1=knowledgeable
       #action: 0=reject, 1=accept
       #informant_action: 0=reject, 1=accept
-      if(child_confidence==1 and informant_reputation==1 and child_action==1 and informant_action==1): cost = -1.0 # (knowledge, knowledge, accept, accept) = low_cost
-      elif(child_confidence==1 and informant_reputation==1 and child_action==0 and informant_action==1): cost = -1.0 # (knowledge, knowledge, reject, accept) = low_cost
-      elif(child_confidence==1 and informant_reputation==1 and child_action==1 and informant_action==0): cost = -1.0 # (knowledge, knowledge, accept, reject) = low_cost
-      elif(child_confidence==1 and informant_reputation==1 and child_action==0 and informant_action==0): cost = -1.0 # (knowledge, knowledge, reject, reject) = low_cost
-      elif(child_confidence==0 and informant_reputation==1 and child_action==1 and informant_action==1): cost = -1.0 # (non-knowledge, knowledge, accept, accept) = low_cost
-      elif(child_confidence==0 and informant_reputation==1 and child_action==0 and informant_action==0): cost = -1.0 # (non-knowledge, knowledge, reject, reject) = low_cost
-      elif(child_confidence==0 and informant_reputation==1 and child_action==0 and informant_action==1): cost = +1.0 # (non-knowledge, knowledge, reject, accept) = high_cost
-      elif(child_confidence==0 and informant_reputation==1 and child_action==1 and informant_action==0): cost = +1.0 # (non-knowledge, knowledge, accept, reject) = high_cost
-      elif(child_confidence==1 and informant_reputation==0 and child_action==1 and informant_action==1): cost = -1.0 # (knowledge, non-knowledge, accept, accept) = low_cost
-      elif(child_confidence==1 and informant_reputation==0 and child_action==0 and informant_action==1): cost = -1.0 # (knowledge, non-knowledge, reject, accept) = high_cost
-      elif(child_confidence==1 and informant_reputation==0 and child_action==1 and informant_action==0): cost = -1.0 # (knowledge, non-knowledge, accept, reject) = high_cost
-      elif(child_confidence==1 and informant_reputation==0 and child_action==0 and informant_action==0): cost = -1.0 # (knowledge, non-knowledge, reject, reject) = low_cost
-      elif(child_confidence==0 and informant_reputation==0 and child_action==1 and informant_action==1): cost = -1.0 # (non-knowledge, non-knowledge, accept, accept) = high_cost
-      elif(child_confidence==0 and informant_reputation==0 and child_action==0 and informant_action==1): cost = +1.0 # (non-knowledge, non-knowledge, reject, accept) = high_cost
-      elif(child_confidence==0 and informant_reputation==0 and child_action==1 and informant_action==0): cost = +1.0 # (non-knowledge, non-knowledge, accept, reject) = high_cost
-      elif(child_confidence==0 and informant_reputation==0 and child_action==0 and informant_action==0): cost = -1.0 # (non-knowledge, non-knowledge, reject, reject) = high_cost
+      if(child_confidence==1 and informant_reputation==1 and child_action==1 and informant_action==1): cost = -1.0 # (knowledge, knowledge, accept, accept) = reinforce
+      elif(child_confidence==1 and informant_reputation==1 and child_action==0 and informant_action==1): cost = +0.5 # (knowledge, knowledge, reject, accept) = slightly punish
+      elif(child_confidence==1 and informant_reputation==1 and child_action==1 and informant_action==0): cost = +0.5 # (knowledge, knowledge, accept, reject) = slightly punish
+      elif(child_confidence==1 and informant_reputation==1 and child_action==0 and informant_action==0): cost = -1.0 # (knowledge, knowledge, reject, reject) = reinforce
+      elif(child_confidence==0 and informant_reputation==1 and child_action==1 and informant_action==1): cost = -1.0 # (non-knowledge, knowledge, accept, accept) = reinforce
+      elif(child_confidence==0 and informant_reputation==1 and child_action==0 and informant_action==0): cost = -1.0 # (non-knowledge, knowledge, reject, reject) = reinforce
+      elif(child_confidence==0 and informant_reputation==1 and child_action==0 and informant_action==1): cost = +1.0 # (non-knowledge, knowledge, reject, accept) = reinforce
+      elif(child_confidence==0 and informant_reputation==1 and child_action==1 and informant_action==0): cost = +1.0 # (non-knowledge, knowledge, accept, reject) = punish
+      elif(child_confidence==1 and informant_reputation==0 and child_action==1 and informant_action==1): cost = -1.0 # (knowledge, non-knowledge, accept, accept) = reinforce
+      elif(child_confidence==1 and informant_reputation==0 and child_action==0 and informant_action==1): cost = +0.5 # (knowledge, non-knowledge, reject, accept) = slightly punish
+      elif(child_confidence==1 and informant_reputation==0 and child_action==1 and informant_action==0): cost = +0.5 # (knowledge, non-knowledge, accept, reject) = slightly punish
+      elif(child_confidence==1 and informant_reputation==0 and child_action==0 and informant_action==0): cost = -1.0 # (knowledge, non-knowledge, reject, reject) = reinforce
+      elif(child_confidence==0 and informant_reputation==0 and child_action==1 and informant_action==1): cost = -1.0 # (non-knowledge, non-knowledge, accept, accept) = reinforce
+      elif(child_confidence==0 and informant_reputation==0 and child_action==0 and informant_action==1): cost = +1.0 # (non-knowledge, non-knowledge, reject, accept) = punish
+      elif(child_confidence==0 and informant_reputation==0 and child_action==1 and informant_action==0): cost = +1.0 # (non-knowledge, non-knowledge, accept, reject) = punish
+      elif(child_confidence==0 and informant_reputation==0 and child_action==0 and informant_action==0): cost = -1.0 # (non-knowledge, non-knowledge, reject, reject) = reinforce
       else: raise ValueError("ERROR: the Bayesian Networks input values are out of range")
 
       #7- The utility table is updated using: preious_state, current_state, cost, reward
@@ -170,31 +173,37 @@ def training(dataset, actor_matrix, critic_vector, informant_vector, tot_images,
       actor_matrix[child_action, col] += learning_rate*delta #the current action
       actor_matrix[1-child_action, col] -= learning_rate*delta #the opposite action
 
-      print("")
-      print("===========================")
-      print("Episode: " + str(counter))
-      print("Image: " + str(image) + "; Label: " + str(label))
-      print("Child action distribution: " + str(action_distribution))
-      print("Child action: " + str(child_action))
-      print("Child knowledge distribution: " + str(child_confidence_distribution))
-      print("Child knowledge: " + str(child_confidence))
-      print("Informant index: " + str(informant_index))
-      print("Informant action: " + str(informant_action))
-      print("Informant knowledge: " + str(informant_reputation))
-      print("Informant knowledge distribution: " + str(informant_reputation_distribution))
-      print("Cost: " + str(cost))
-      print("")
-      print("critic vector: " + str(critic_vector))
-      print("")
-      print("actor_matrix: " + str(actor_matrix))
-      print("")
-      print("informant_vector: " + str(informant_vector))
-      counter += 1
+      if(verbose==True):
+        print("")
+        print("===========================")
+        print("Episode: " + str(counter))
+        print("Image: " + str(image) + "; Label: " + str(label))
+        print("Child action distribution: " + str(action_distribution))
+        print("Child action: " + str(child_action))
+        print("Child knowledge distribution: " + str(child_confidence_distribution))
+        print("Child knowledge: " + str(child_confidence))
+        print("Informant index: " + str(informant_index))
+        print("Informant action: " + str(informant_action))
+        print("Informant knowledge: " + str(informant_reputation))
+        print("Informant knowledge distribution: " + str(informant_reputation_distribution))
+        print("Cost: " + str(cost))
+        print("")
+        print("critic vector: " + str(critic_vector))
+        print("")
+        print("actor_matrix: " + str(actor_matrix))
+        print("")
+        print("informant_vector: " + str(informant_vector))
+        counter += 1
 
     return actor_matrix, critic_vector, informant_vector
 
 def main():  
 
+  tot_iterations = 25
+  judgment_list = list()
+  endorse_list = list()
+
+  for _ in range(tot_iterations):
     #- Building the CRITIC
     #The critic is a vector of (tot_images * tot_labels)
     tot_images = 12
@@ -209,7 +218,7 @@ def main():
     dict_labels = {'cup': 0, 'book': 1, 'ball': 2, 'shoe': 3, 'dog': 4, 'chair': 5, 'loma': 6, 'mido': 7, 'wug': 8, 'dax': 9, 'blicket': 10, 'dawnoo': 11}
     #- Reliability vector of the three informants
     #index: 0=caregiver, 1=reliable, 2=unreliable
-    informant_vector = np.array([[1, 100], [1, 1], [1, 1]])
+    informant_vector = np.array([[1, 1000], [1, 1], [1, 1]])
 
     #1- IMPRINTING: a caregiver gives labels to unknown objects.
     #NOTE: hee to decide how many times the training should be executed maybe
@@ -228,6 +237,11 @@ def main():
                           (dict_images['DOG'], dict_labels['dog'], 0, 1),
                           (dict_images['CHAIR'], dict_labels['chair'], 0, 1)]
 
+    actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
+    actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
+    actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
+    actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
+    actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
     actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
     actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
     actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
@@ -280,6 +294,11 @@ def main():
     actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
     actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
     actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
+    actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
+    actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
+    actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
+    actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
+    actor_matrix, critic_vector, informant_vector = training(dataset_imprinting, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
 
     #2- FAMILIARISATION: a set of known objects is presented
     #The reliable informant always gives the correct label
@@ -291,8 +310,41 @@ def main():
   
     actor_matrix, critic_vector, informant_vector = training(dataset_familiarisation, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
 
+    #3- EXPLICIT JUDGMENT TRIALS
+    print("")
+    print("####### EXPLICIT JUDGMENT TEST ########")
+    print("Who was not so good at answering question?")
+    print("Children have to indicate the unreliable informant")
+    print("")
+    # 0=unreliable, 1=reliable
+    reliable_informant_distribution = np.true_divide(informant_vector[1], np.sum(informant_vector[1]))
+    unreliable_informant_distribution = np.true_divide(informant_vector[2], np.sum(informant_vector[2]))
+    reliable_informant = np.random.choice(2, 1, p=reliable_informant_distribution)
+    unreliable_informant = np.random.choice(2, 1, p=unreliable_informant_distribution)
+    if(reliable_informant==1 and unreliable_informant==0):
+        print("RIGHT: Unreliable was not good")
+        judgment_list.append(1)
+    elif(reliable_informant==0 and unreliable_informant==1):
+        print("WRONG: Reliable was not good")
+        judgment_list.append(0)
+    elif(reliable_informant==0 and unreliable_informant==0):
+        label = np.random.choice(2, 1)
+        if(label == 0):
+            judgment_list.append(0)
+            print("WRONG: Reliable was not good")
+        elif(label == 1):
+            judgment_list.append(1)
+            print("RIGHT: Unreliable was not good")
+    elif(reliable_informant==1 and unreliable_informant==1):
+        label = np.random.choice(2, 1)
+        if(label == 0):
+            judgment_list.append(0)
+            print("WRONG: Reliable was not good")
+        elif(label == 1):
+            judgment_list.append(1)
+            print("RIGHT: Unreliable was not good")
 
-    #3- DECISION MAKING: new object presented.
+    #4- DECISION MAKING: new object presented.
     #The two informants give different labels.
     print("####### DECISION MAKING ########")
     dataset_decision = [(dict_images['MIDO'], dict_labels['mido'], 1, 1), (dict_images['MIDO'], dict_labels['loma'], 2, 1),
@@ -301,7 +353,8 @@ def main():
 
     actor_matrix, critic_vector, informant_vector = training(dataset_decision, actor_matrix, critic_vector, informant_vector, tot_images, tot_labels, tot_actions)
 
-    #4- ASK TRIAL
+
+    #5- ASK TRIAL
     print("")
     print("####### ASK TEST ########")
     print("")
@@ -310,11 +363,12 @@ def main():
     #This is the equivalent of setting to 1 the unit ACCEPT of the action layer of the SOM
     #And to activate the BMU of the Visual SOM. The computation returns the argmax.
     object_name_list = ['cup', 'book', 'ball', 'shoe', 'dog', 'chair', 'loma', 'mido', 'wug', 'dax', 'blicket', 'dawnoo']
+    total_score = 0
 
     print("---- ASK MIDO ----")
     col_start = (dict_images['MIDO'] * tot_images)
     col_stop =  (dict_images['MIDO'] * tot_images) + tot_labels
-    child_answer_distribution = actor_matrix[1,col_start:col_stop] #second row (accept) and columns for MIDO
+    child_answer_distribution = actor_matrix[1,col_start:col_stop] #second row (accept)
     print("Object labels: " + str(object_name_list))
     print("Child answer distribution: " + str(child_answer_distribution))
     child_answer_distribution = softmax(child_answer_distribution)
@@ -322,12 +376,13 @@ def main():
     child_answer = return_best_choice(child_answer_distribution)
     #'cup': 0, 'book': 1, 'ball': 2, 'shoe': 3, 'dog': 4, 'chair': 5, 'mido': 6
     print("Child answer: " + str(object_name_list[child_answer]))
+    if(child_answer == dict_images['MIDO']): total_score += 1
     print("")
 
     print("---- ASK WUG ----")
     col_start = (dict_images['WUG'] * tot_images)
     col_stop =  (dict_images['WUG'] * tot_images) + tot_labels
-    child_answer_distribution = actor_matrix[1,col_start:col_stop] #second row (accept) and columns for MIDO
+    child_answer_distribution = actor_matrix[1,col_start:col_stop] #second row (accept)
     print("Object labels: " + str(object_name_list))
     print("Child answer distribution: " + str(child_answer_distribution))
     child_answer_distribution = softmax(child_answer_distribution)
@@ -335,12 +390,13 @@ def main():
     child_answer = return_best_choice(child_answer_distribution)
     #'cup': 0, 'book': 1, 'ball': 2, 'shoe': 3, 'dog': 4, 'chair': 5, 'mido': 6
     print("Child answer: " + str(object_name_list[child_answer]))
+    if(child_answer == dict_images['WUG']): total_score += 1
     print("")
 
     print("---- ASK BLICKET ----")
     col_start = (dict_images['BLICKET'] * tot_images)
     col_stop =  (dict_images['BLICKET'] * tot_images) + tot_labels
-    child_answer_distribution = actor_matrix[1,col_start:col_stop] #second row (accept) and columns for MIDO
+    child_answer_distribution = actor_matrix[1,col_start:col_stop] #second row (accept)
     print("Object labels: " + str(object_name_list))
     print("Child answer distribution: " + str(child_answer_distribution))
     child_answer_distribution = softmax(child_answer_distribution)
@@ -348,7 +404,15 @@ def main():
     child_answer = return_best_choice(child_answer_distribution)
     #'cup': 0, 'book': 1, 'ball': 2, 'shoe': 3, 'dog': 4, 'chair': 5, 'mido': 6
     print("Child answer: " + str(object_name_list[child_answer]))
+    if(child_answer == dict_images['BLICKET']): total_score += 1
     print("")
+
+    #Add the total score to endorse list    
+    endorse_list.append(total_score)
+
+  print("Results for " + str(tot_iterations) + " iterations")
+  print(str(judgment_list))
+  print(str(endorse_list))
 
 if __name__ == "__main__":
     main()
