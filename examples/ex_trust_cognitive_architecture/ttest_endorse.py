@@ -31,8 +31,8 @@ print("")
 #sample_4yo_array = np.array([1, 3, 3, 1, 2, 1, 2, 3, 3, 2, 3, 2, 3, 0, 2, 2, 3, 2, 0, 1]) #20 samples 
 #sample_3yo_array = np.array([2, 1, 1, 2, 2, 2, 1, 1, 1, 3, 1, 2, 2, 3, 3, 0, 2, 0, 1, 2]) #20 samples
 
-sample_3yo_array = np.array([0, 3, 1, 1, 1, 0, 0, 2, 2, 1, 3, 1, 1, 2, 3, 2, 1, 2, 1, 2, 0, 2, 1, 2, 2])
-sample_4yo_array = np.array([1, 2, 2, 3, 2, 3, 2, 2, 1, 2, 2, 1, 2, 2, 2, 2, 3, 1, 3, 2, 1, 2, 0, 3, 3])
+sample_3yo_array = np.array([1, 1, 2, 1, 2, 2, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 0, 1, 1, 3, 2, 3, 2, 2])
+sample_4yo_array = np.array([2, 2, 3, 3, 1, 1, 2, 1, 2, 3, 2, 3, 0, 3, 3, 3, 1, 2, 1, 1, 0, 1, 3, 3, 2])
 
 t, prob = stats.ttest_ind(sample_4yo_array, random_list, equal_var=True)
 print("----- 4-years-old -----")

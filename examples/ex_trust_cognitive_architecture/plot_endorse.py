@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 #Learning rate 0.1, informant reputation counter not updated when child_confidence==0
 #sample_4yo_array = np.array([1, 3, 3, 1, 2, 1, 2, 3, 3, 2, 3, 2, 3, 0, 2, 2, 3, 2, 0, 1, 2, 1, 1, 3, 2]) #25 samples
 #sample_3yo_array = np.array([2, 1, 1, 2, 2, 2, 1, 1, 1, 3, 1, 2, 2, 3, 3, 0, 2, 0, 1, 2, 2, 1, 2, 1, 2]) #25 samples
-sample_4yo_array = np.array([1, 3, 3, 1, 2, 1, 2, 3, 3, 2, 3, 2, 3, 0, 2, 2, 3, 2, 0, 1]) #20 samples 
-sample_3yo_array = np.array([2, 1, 1, 2, 2, 2, 1, 1, 1, 3, 1, 2, 2, 3, 3, 0, 2, 0, 1, 2]) #20 samples
+sample_3yo_array = np.array([1, 1, 2, 1, 2, 2, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 0, 1, 1, 3, 2, 3, 2, 2])
+sample_4yo_array = np.array([2, 2, 3, 3, 1, 1, 2, 1, 2, 3, 2, 3, 0, 3, 3, 3, 1, 2, 1, 1, 0, 1, 3, 3, 2])
 
 #4yo Mean,  3yo Mean
 my_mean = (np.mean(sample_4yo_array), np.mean(sample_3yo_array))
