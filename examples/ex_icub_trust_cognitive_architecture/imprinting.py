@@ -60,7 +60,7 @@ def speech_to_action(speech_string):
     @param speech_string: 
     @return: 
     """
-    if 'find' in speech_string:
+    if 'find' or 'search' in speech_string:
         response_list = ['All right! I will find the ',
                          'Ok, I will look for the ',
                          'Searching the ',
@@ -93,7 +93,7 @@ def speech_to_action(speech_string):
         state = 'movedetect off'
     else:
         response_list = ["Sorry I did not understand what you said.",
-                         'What did you say?',
+                         'Sorry, What did you say?',
                          'Repeat again please.']
         response_string = response_list[random.randint(0,len(response_list)-1)]
         state = 'key'
@@ -101,21 +101,11 @@ def speech_to_action(speech_string):
     return response_string, state
 
 
-def move_head_random(icub_instance, delay):
-    while True:
-        icub_instance.set_head_pose(0, random.randint(a=-30, b=+30), random.randint(a=-20, b=+20))
-        time.sleep(delay)
-
-
 def main():
     STATE = 'show'
     speech_string = ""
     my_speech, my_icub = initialise()
     my_icub.say_something(text="I'm ready!")
-    # my_icub.set_head_pose(roll=0, pitch=0, yaw=0)
-    # image_left = my_icub.return_left_camera_image()
-    # Image.fromarray(image_left).show()
-    # my_icub.close()
 
     while True:
         if STATE == 'record':

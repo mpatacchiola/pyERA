@@ -32,6 +32,8 @@ import subprocess
 import csv
 import deepgaze
 from deepgaze.color_classification import HistogramColorClassifier
+from deepgaze.motion_detection import MogMotionDetector
+from deepgaze.mask_analysis import BinaryMaskAnalyser
 import thread
 import threading
 import random
@@ -41,7 +43,6 @@ class iCub:
 
     def __init__(self, icub_root='/icubSim'):
         # Global variables
-        #self.thread_movement_detection = None
         self.thread_movement_detection = threading.Thread(target=None)
         self.acapela_account_login = ''
         self.acapela_application_login = ''
@@ -152,6 +153,37 @@ class iCub:
             self.rpc_client_head.write(bottle, result)  # Send
             time.sleep(delay)
 
+    def _track_movement(self):
+        delay = 0.5
+        pitch = 0
+        yaw = 0
+        bottle = yarp.Bottle()
+        result = yarp.Bottle()
+        my_mog_detector = MogMotionDetector()
+        my_mask_analyser = BinaryMaskAnalyser()
+        t = threading.currentThread()
+        while getattr(t, "do_run", True):
+            self.port_left_camera.read(self.yarp_image)
+            mog_mask = my_mog_detector.returnMask(self.img_array)
+            cx, cy = my_mask_analyser.returnMaxAreaCenter(mog_mask)
+            #TODO here from the centre it is necessary to estimate
+            #a point where to look in yaw/pitch coords
+            # Set PITCH
+            bottle.clear()
+            bottle.addString("set")
+            bottle.addString("pos")
+            bottle.addInt(0)  # Joint
+            bottle.addInt(pitch)  # Angle
+            self.rpc_client_head.write(bottle, result)  # Send
+            # Set YAW
+            bottle.clear()
+            bottle.addString("set")
+            bottle.addString("pos")
+            bottle.addInt(2)  # Joint
+            bottle.addInt(yaw)  # Angle
+            self.rpc_client_head.write(bottle, result)  # Send
+            time.sleep(delay)
+
     def start_movement_detection(self, delay=1.0):
         try:
             if not self.thread_movement_detection.isAlive():
@@ -166,7 +198,6 @@ class iCub:
             if self.thread_movement_detection.isAlive():
                 self.thread_movement_detection.do_run = False
                 self.thread_movement_detection.join()
-                self.thread_movement_detection = None
                 self.set_head_pose(0, 0, 0) #reset the head
                 print "[ICUB] Head control thread stopped!"
         except:
