@@ -32,11 +32,21 @@ import subprocess
 import csv
 import deepgaze
 from deepgaze.color_classification import HistogramColorClassifier
+import thread
+import threading
+import random
 
 
 class iCub:
 
     def __init__(self, icub_root='/icubSim'):
+        # Global variables
+        #self.thread_movement_detection = None
+        self.thread_movement_detection = threading.Thread(target=None)
+        self.acapela_account_login = ''
+        self.acapela_application_login = ''
+        self.acapela_application_password = ''
+        self.acapela_service_url = ''
         # Init YARP
         yarp.Network.init()        
         # Camera connection
@@ -110,6 +120,57 @@ class iCub:
             return cv2.cvtColor(self.img_array, cv2.COLOR_BGR2GRAY)
         else:
             return self.img_array
+
+    def _move_head_random(self, delay=1.0):
+        t = threading.currentThread()
+        while getattr(t, "do_run", True):
+            roll = 0
+            pitch = random.randint(a=-30, b=+30)
+            yaw = random.randint(a=-20, b=+20)
+            bottle = yarp.Bottle()
+            result = yarp.Bottle()
+            # Set ROLL
+            bottle.clear()
+            bottle.addString("set")
+            bottle.addString("pos")
+            bottle.addInt(1)  # Joint
+            bottle.addInt(roll)  # Angle
+            self.rpc_client_head.write(bottle, result)  # Send
+            # Set PITCH
+            bottle.clear()
+            bottle.addString("set")
+            bottle.addString("pos")
+            bottle.addInt(0)  # Joint
+            bottle.addInt(pitch)  # Angle
+            self.rpc_client_head.write(bottle, result)  # Send
+            # Set YAW
+            bottle.clear()
+            bottle.addString("set")
+            bottle.addString("pos")
+            bottle.addInt(2)  # Joint
+            bottle.addInt(yaw)  # Angle
+            self.rpc_client_head.write(bottle, result)  # Send
+            time.sleep(delay)
+
+    def start_movement_detection(self, delay=1.0):
+        try:
+            if not self.thread_movement_detection.isAlive():
+                self.thread_movement_detection = threading.Thread(target=self._move_head_random, args=(1.5,))
+                self.thread_movement_detection.start()
+                print "[ICUB] Head control thread started!"
+        except:
+            print "[ICUB][ERROR] unable to start head control thread"
+
+    def stop_movement_detection(self):
+        try:
+            if self.thread_movement_detection.isAlive():
+                self.thread_movement_detection.do_run = False
+                self.thread_movement_detection.join()
+                self.thread_movement_detection = None
+                self.set_head_pose(0, 0, 0) #reset the head
+                print "[ICUB] Head control thread stopped!"
+        except:
+            print "[ICUB][ERROR] unable to stop head control thread. Is it running?"
 
     def set_head_pose_ikin(self, roll, pitch, yaw):
         """It sets the icub head using the RPC port
@@ -197,19 +258,42 @@ class iCub:
         else:
             return_tuple[2] = False
 
+    def set_acapela_credential(self, csv_path):
+        '''Load the ACAPELA config parameters
 
-def say_something(self, text, account_login, application_login, application_password, service_url, directory='/tmp/', in_background=True):
-    """It says something using ACAPELA tts
+        The first line of the CSV must contain:
+        account_login, application_login, 
+        application_password, service_url.
+        @param csv_path the path to the config file
+        '''
+        with open(csv_path, 'rb') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',')
+            for row in reader:
+                self.acapela_account_login = row[0]
+                self.acapela_application_login = row[1]
+                self.acapela_application_password = row[2]
+                self.acapela_service_url = row[3]
 
-    @param text the string to say
-    @param in_background run the process in background
-    """
-    print("[ICUB][ACAPELA] Downloading the mp3 file...")
-    tts_acapela = acapela.Acapela(account_login, application_login, application_password,
-                                  service_url, quality='22k', directory=directory)
-    tts_acapela.prepare(text=text, lang='US', gender='M', intonation='NORMAL')
-    output_filename = tts_acapela.run()
-    subprocess.Popen(["play","-q",directory + str(output_filename)])
-    print "[ICUB][ACAPELA] Recorded TTS to %s" % output_filename
+    def get_acapela_credential(self):
+        '''Return the ACAPELA config parameters
 
- 
+        '''
+        return self.acapela_account_login, self.acapela_application_login, self.acapela_application_password, self.acapela_service_url
+
+    def say_something(self, text, directory='/tmp/', in_background=True):
+        """It says something using ACAPELA tts
+
+        @param text the string to say
+        @param in_background run the process in background
+        """
+        print("[ICUB][ACAPELA] Downloading the mp3 file...")
+
+        tts_acapela = acapela.Acapela(self.acapela_account_login, self.acapela_application_login,
+                                      self.acapela_application_password, self.acapela_service_url,
+                                      quality='22k', directory=directory)
+        tts_acapela.prepare(text=text, lang='US', gender='M', intonation='NORMAL')
+        output_filename = tts_acapela.run()
+        print "[ICUB][ACAPELA] Recorded TTS to %s" % output_filename
+        subprocess.Popen(["play","-q",directory + str(output_filename)])
+        print "[ICUB][PLAY] reproducing the acapela file"
+
