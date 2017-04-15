@@ -14,9 +14,9 @@ grammar icub;
 
 public <basicCmd> = <start> <action> <target>;
 public <complexCmd> = <start> <action> <target> <object> <end>;
-<start> = [/25/  hey |/50/  i cub |/25/  robot ];
+<start> = [/5/  hey |/25/  i cub |/5/  robot ];
+<action> = (learn new object | watch | inspect | find | search | look | what | start movement detection | stop | online | save);
+<target> = (ball | cup | book | dog | chair | shoe | table | at me | is this | movement detection | template);
 <connector> =  [the | a | at];
-<action> = (learn | watch | inspect | find | search);
 <object> = [ at | is | the] [me | table | down | left | this | that | object];
-<target> = (ball | cup | book | dog | chair);
 <end> = [ please | thanks ];

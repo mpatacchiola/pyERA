@@ -22,6 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# Command to lunch in simulation mode
+# yarpserver
+# ./iCub_SIM
+# ./iKinGazeCtrl --from configSim.ini
+# yarpdev --device opencv_grabber
+# yarp connect /grabber /icubSim/texture/screen
+
 import numpy as np
 import cv2
 import time
@@ -32,6 +39,7 @@ import subprocess
 import csv
 import deepgaze
 from deepgaze.color_classification import HistogramColorClassifier
+from deepgaze.color_detection import BackProjectionColorDetector
 from deepgaze.motion_detection import MogMotionDetector
 from deepgaze.mask_analysis import BinaryMaskAnalyser
 import thread
@@ -48,6 +56,11 @@ class iCub:
         self.acapela_application_login = ''
         self.acapela_application_password = ''
         self.acapela_service_url = ''
+        # Deepgaze variables
+        self.object_list = list()
+        self.histogram_classifier = HistogramColorClassifier(channels=[0, 1, 2], hist_size=[128, 128, 128],
+                                                             hist_range=[0, 256, 0, 256, 0, 256], hist_type='BGR')
+
         # Init YARP
         yarp.Network.init()        
         # Camera connection
@@ -72,11 +85,37 @@ class iCub:
         except BaseException, err:
             print("[ICUB][ERROR] connect To Camera catching error " + str(err))
             return
+
+        try:
+            self.port_ikin_mono = yarp.Port()
+            self.port_ikin_mono.open("/pyera-ikin-mono")
+            yarp.Network.connect("/pyera-ikin-mono", "/iKinGazeCtrl/mono:i")
+        except BaseException, err:
+            print("[ICUB][ERROR] connect To iKinGazeCtrl/mono catching error " + str(err))
+            return
+
+        try:
+            self.port_ikin_stereo = yarp.Port()
+            self.port_ikin_stereo.open("/pyera-ikin-stereo")
+            yarp.Network.connect("/pyera-ikin-stereo", "/iKinGazeCtrl/stereo:i")
+        except BaseException, err:
+            print("[ICUB][ERROR] connect To iKinGazeCtrl/stereo catching error " + str(err))
+            return
+
+        try:
+            self.port_ikin_xd = yarp.Port()
+            self.port_ikin_xd.open("/pyera-ikin-xd")
+            yarp.Network.connect("/pyera-ikin-xd", "/iKinGazeCtrl/xd:i")
+        except BaseException, err:
+            print("[ICUB][ERROR] connect To iKinGazeCtrl/xd catching error " + str(err))
+            return
+
         self.rpc_client_head = yarp.RpcClient()
         self.rpc_client_head.addOutput(icub_root+"/head/rpc:i")
 
         self.rpc_client_head_ikin = yarp.RpcClient()
-        self.rpc_client_head_ikin.addOutput(icub_root+"/iKinGazeCtrl/rpc")
+        self.rpc_client_head_ikin.addOutput("/iKinGazeCtrl/rpc")
+
 
     def close(self):
         """Close all the services
@@ -122,6 +161,55 @@ class iCub:
         else:
             return self.img_array
 
+    def move_head_to_target_mono(self, type, u, v, z):
+        """ given a point in the image (mono) it moves the head
+        to that point. 
+        
+        WARNING: it requires iKinGazeCtrl to run.
+        @param type: left or right image (string)
+        @param u: the x coordinate of the point
+        @param v: the y coordinate of the point
+        @param z: the estimated depth in the eye coord frame
+        """
+        bottle = yarp.Bottle()
+        bottle.clear()
+        bottle.addString(type)
+        bottle.addDouble(u)
+        bottle.addDouble(v)
+        bottle.addDouble(z)
+        self.port_ikin_mono.write(bottle)
+
+    def move_head_to_target_stereo(self, u_left, v_left, u_right, v_right):
+        """ Move the head to a point defined in the two image plane (stereo)
+        
+        @param u_left: x coord in the left image
+        @param v_left: y coord in the left image
+        @param u_right: x coord in the right image
+        @param v_right: y coord in the right image
+        """
+        bottle = yarp.Bottle()
+        bottle.clear()
+        bottle.addDouble(u_left)
+        bottle.addDouble(v_left)
+        bottle.addDouble(u_right)
+        bottle.addDouble(v_right)
+        self.port_ikin_stereo.write(bottle)
+
+    def move_head_to_point(self, x, y, z):
+        """ Given a point in the space it moves the head 
+        in the direction of the point.
+        
+        @param x: the x coord of the point
+        @param y: the y coord of the point
+        @param z: the z coord of the point
+        """
+        bottle = yarp.Bottle()
+        bottle.clear()
+        bottle.addDouble(x)
+        bottle.addDouble(y)
+        bottle.addDouble(z)
+        self.port_ikin_xd.write(bottle)
+
     def _move_head_random(self, delay=1.0):
         t = threading.currentThread()
         while getattr(t, "do_run", True):
@@ -153,41 +241,42 @@ class iCub:
             self.rpc_client_head.write(bottle, result)  # Send
             time.sleep(delay)
 
-    def _track_movement(self):
-        delay = 0.5
-        pitch = 0
-        yaw = 0
-        bottle = yarp.Bottle()
-        result = yarp.Bottle()
-        my_mog_detector = MogMotionDetector()
+    def _track_movement(self, template_path, delay=0.5):
+        """ Given a colour template it tracks the 
+        
+        @param delay: 
+        @return: 
+        """
         my_mask_analyser = BinaryMaskAnalyser()
         t = threading.currentThread()
+        template = cv2.imread(template_path)  # Load the image
+        my_back_detector = BackProjectionColorDetector()  # Defining the deepgaze color detector object
+        my_back_detector.setTemplate(template)  # Set the template
+        #cv2.namedWindow('filtered')
         while getattr(t, "do_run", True):
-            self.port_left_camera.read(self.yarp_image)
-            mog_mask = my_mog_detector.returnMask(self.img_array)
-            cx, cy = my_mask_analyser.returnMaxAreaCenter(mog_mask)
-            #TODO here from the centre it is necessary to estimate
-            #a point where to look in yaw/pitch coords
-            # Set PITCH
-            bottle.clear()
-            bottle.addString("set")
-            bottle.addString("pos")
-            bottle.addInt(0)  # Joint
-            bottle.addInt(pitch)  # Angle
-            self.rpc_client_head.write(bottle, result)  # Send
-            # Set YAW
-            bottle.clear()
-            bottle.addString("set")
-            bottle.addString("pos")
-            bottle.addInt(2)  # Joint
-            bottle.addInt(yaw)  # Angle
-            self.rpc_client_head.write(bottle, result)  # Send
-            time.sleep(delay)
+            #img_array = np.zeros((360,240,3), dtype=np.uint8)
+            img_array = self.return_left_camera_image(mode='BGR')
+            image_filtered = my_back_detector.returnFiltered(img_array, morph_opening=True, blur=True, kernel_size=7, iterations=2)
+            cx, cy = my_mask_analyser.returnMaxAreaCenter(image_filtered)
+            if cx is not None:
+                cv2.circle(image_filtered,(cx,cy), 5, (0, 0, 255), -1)
+                bottle = yarp.Bottle()
+                bottle.clear()
+                bottle.addString('left')
+                bottle.addDouble(cx)
+                bottle.addDouble(cy)
+                bottle.addDouble(1.0)
+                self.port_ikin_mono.write(bottle)
+            #images_stack = np.hstack((img_array, image_filtered))
+            #cv2.imshow('filtered', images_stack)
+            #cv2.waitKey(100) #waiting 50 msec
+            time.sleep(0.1)
+        #cv2.destroyWindow('filtered')
 
-    def start_movement_detection(self, delay=1.0):
+    def start_movement_detection(self, template_path, delay=1.0):
         try:
             if not self.thread_movement_detection.isAlive():
-                self.thread_movement_detection = threading.Thread(target=self._move_head_random, args=(1.5,))
+                self.thread_movement_detection = threading.Thread(target=self._track_movement, args=(template_path, 0.5,))
                 self.thread_movement_detection.start()
                 print "[ICUB] Head control thread started!"
         except:
@@ -198,51 +287,10 @@ class iCub:
             if self.thread_movement_detection.isAlive():
                 self.thread_movement_detection.do_run = False
                 self.thread_movement_detection.join()
-                self.set_head_pose(0, 0, 0) #reset the head
+                self.reset_head_pose()  # reset the head
                 print "[ICUB] Head control thread stopped!"
         except:
             print "[ICUB][ERROR] unable to stop head control thread. Is it running?"
-
-    def set_head_pose_ikin(self, roll, pitch, yaw):
-        """It sets the icub head using the RPC port
-           HEAD axes: 0=Pitch, 1=Roll, 2=Yaw
-
-        @param roll (degree) int
-        @param pitch (degree) int
-        @param yaw (degree) int
-        """
-        bottle = yarp.Bottle()
-        result = yarp.Bottle()
-        return_tuple = [False, False, False]
-        #Set ROLL
-        bottle.clear()
-        bottle.addString("set")
-        bottle.addString("pos")
-        bottle.addInt(1) #Joint
-        bottle.addInt(roll) #Angle
-        self.rpc_client_head_ikin.write(bottle, result) #Send
-        if(result == "[OK]"): return_tuple[0] = True
-        else: return_tuple[0] = False
-        #Set PITCH
-        bottle.clear()
-        bottle.addString("set")
-        bottle.addString("pos")
-        bottle.addInt(0) #Joint
-        bottle.addInt(pitch) #Angle
-        self.rpc_client_head_ikin.write(bottle, result) #Send
-        if(result == "[OK]"): return_tuple[1] = True
-        else: return_tuple[1] = False
-        #Set YAW
-        bottle.clear()
-        bottle.addString("set")
-        bottle.addString("pos")
-        bottle.addInt(2) #Joint
-        bottle.addInt(yaw) #Angle
-        self.rpc_client_head_ikin.write(bottle, result) #Send
-        if result == "[OK]":
-            return_tuple[2] = True
-        else:
-            return_tuple[2] = False
 
     def set_head_pose(self, roll, pitch, yaw):
         """It sets the icub head using the RPC port
@@ -289,6 +337,115 @@ class iCub:
         else:
             return_tuple[2] = False
 
+    def reset_head_pose(self):
+        """Reset the eyes and head position to 0,0,0
+
+        """
+        bottle = yarp.Bottle()
+        result = yarp.Bottle()
+        #Set ROLL
+        bottle.clear()
+        bottle.addString("set")
+        bottle.addString("pos")
+        bottle.addInt(1) #Joint
+        bottle.addInt(0) #Angle
+        self.rpc_client_head.write(bottle, result) #Send
+        # Set PITCH
+        bottle.clear()
+        bottle.addString("set")
+        bottle.addString("pos")
+        bottle.addInt(0)  # Joint
+        bottle.addInt(0)  # Angle
+        self.rpc_client_head.write(bottle, result)  # Send
+        # Set YAW
+        bottle.clear()
+        bottle.addString("set")
+        bottle.addString("pos")
+        bottle.addInt(2)  # Joint
+        bottle.addInt(0)  # Angle
+        self.rpc_client_head.write(bottle, result)  # Send
+        # Set EYE-YAW
+        bottle.clear()
+        bottle.addString("set")
+        bottle.addString("pos")
+        bottle.addInt(3)  # Joint
+        bottle.addInt(0)  # Angle
+        self.rpc_client_head.write(bottle, result)  # Send
+        # Set EYE-PITCH
+        bottle.clear()
+        bottle.addString("set")
+        bottle.addString("pos")
+        bottle.addInt(4)  # Joint
+        bottle.addInt(0)  # Angle
+        self.rpc_client_head.write(bottle, result)  # Send
+
+    def get_3d_mono_angles(self, type, u, v, z):
+        """ returns the 3D point whose projected pixel coordinates (u,v) 
+        in the image plane <type> ["left"|"right"] along with third 
+        component <z> in the eye's reference frame are given.
+        It requires iKinGaze to run. In the simulator mode should
+        be activated with: ./iKinGazeCtrl --from configSim.ini
+        
+        WARNING: has been hard to find the way for adding a list
+        in a bottle, the icub documentation should be improved.
+        The trick is: tmp_var = bottle.addList()
+        @param type: 'let' or 'right' camera
+        @param u: pixel coordinate x
+        @param v: pixel coordinate y
+        @param z: third component (eye reference frame)
+        @return: the 3D point (x,y,z) coordinates
+        """
+        bottle = yarp.Bottle()
+        result = yarp.Bottle()
+        bottle.clear()
+        bottle.addString('get')
+        bottle.addString('3D')
+        bottle.addString('mono')
+        tmp0 = bottle.addList()
+        tmp0.addString('left')
+        tmp0.addInt(35)
+        tmp0.addInt(35)
+        tmp0.addInt(35)
+        self.rpc_client_head_ikin.write(bottle, result)
+        list_bottle = result.get(1).asList()
+        list_return = []
+        for i in range(list_bottle.size()):
+            list_return.append(list_bottle.get(i).asDouble())
+        return list_return
+
+    def get_3d_stereo_angles(self, u_left, v_left, u_right, v_right):
+        """ returns the 3D point whose projected pixel coordinates (u,v) 
+        in the image plane <type> ["left"|"right"] along with third 
+        component <z> in the eye's reference frame are given.
+        It requires iKinGaze to run. In the simulator mode should
+        be activated with: ./iKinGazeCtrl --from configSim.ini
+
+        WARNING: has been hard to find the way for adding a list
+        in a bottle, the icub documentation should be improved.
+        The trick is: tmp_var = bottle.addList()
+        @param type: 'let' or 'right' camera
+        @param u: pixel coordinate x
+        @param v: pixel coordinate y
+        @return: the 3D point (x,y,z) coordinates
+        """
+        bottle = yarp.Bottle()
+        result = yarp.Bottle()
+        bottle.clear()
+        bottle.addString('get')
+        bottle.addString('3D')
+        bottle.addString('stereo')
+        tmp0 = bottle.addList()
+        tmp0.addInt(u_left)
+        tmp0.addInt(v_left)
+        tmp0.addInt(u_right)
+        tmp0.addInt(v_right)
+        self.rpc_client_head_ikin.write(bottle, result)
+        list_bottle = result.get(1).asList()
+        list_return = []
+        for i in range(list_bottle.size()):
+            list_return.append(list_bottle.get(i).asDouble())
+        return list_return
+
     def set_acapela_credential(self, csv_path):
         '''Load the ACAPELA config parameters
 
@@ -328,3 +485,36 @@ class iCub:
         subprocess.Popen(["play","-q",directory + str(output_filename)])
         print "[ICUB][PLAY] reproducing the acapela file"
 
+    def learn_object_from_histogram(self, template, name):
+        self.histogram_classifier.addModelHistogram(template)
+        self.object_list.append(name)
+
+    def recall_object_from_histogram(self, template):
+        if(len(self.object_list) == 0): return None
+        comparison_array = self.histogram_classifier.returnHistogramComparisonArray(template, method="intersection")
+        comparison_distribution = comparison_array / np.sum(comparison_array)
+        return self.object_list[np.argmax(comparison_distribution)]
+
+'''
+def main():
+    my_cub = iCub()
+    #my_cub.return_left_camera_image()
+    #print(my_cub.get_3d_mono_angles(type='left', u=0, v=0, z=0).toString())
+    #print(my_cub.get_3d_mono_angles(type='left', u=0, v=0, z=0).size())
+    #result = my_cub.get_3d_stereo_angles(u_left=23, v_left=20, u_right=35, v_right=20)
+    #print(result.size())
+    #print (result.get(1).isList())
+    #print(result.get(1).get(0).asDouble())
+    #rint(yarpListToTuple(result.get(1).asList()))
+
+    #my_cub.move_head_to_target(type='left', u=50, v=50, z=0.5)
+    my_cub.reset_head_pose()
+    #my_cub.move_head_to_target_mono(type='left', u=0, v=0, z=0.5)
+    time.sleep(2)
+    my_cub.start_movement_detection()
+    time.sleep(30)
+    my_cub.stop_movement_detection()
+
+if __name__ == "__main__":
+    main()
+'''

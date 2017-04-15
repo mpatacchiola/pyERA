@@ -60,44 +60,52 @@ def speech_to_action(speech_string):
     @param speech_string: 
     @return: 
     """
-    if 'find' or 'search' in speech_string:
+    if speech_string.find('find') > -1 or speech_string.find('search') > -1:
         response_list = ['All right! I will find the ',
                          'Ok, I will look for the ',
                          'Searching the ',
                          'I am looking for a ']
         response_string = response_list[random.randint(0,len(response_list)-1)] + speech_string.rsplit(None, 1)[-1]
         state = 'key'
-    elif 'learn new object' in speech_string:
+    elif speech_string.find('learn new object') > -1:
         response_list = ['I like to learn! This is a ',
                          'Ok, this is a ',
                          '']
-        response_string = response_list[random.randint(0,len(response_list)-1)] + speech_string.rsplit(None, 1)[-1]
-        state = 'key'
-    elif 'what is this' in speech_string:
-        response_list = ['Let me see',
-                         'Let me think.',
-                         'Just a second']
-        response_string = response_list[random.randint(0,len(response_list)-1)]
-        state = 'key'
-    elif 'start movement detection' in speech_string:
-        response_list = ["Ok, now I'm looking for moving objects",
-                         'Ok I will track movements',
-                         'Ready to track!']
-        response_string = response_list[random.randint(0, len(response_list)-1)]
+        object_name = speech_string.rsplit(None, 1)[-1]
+        response_string = response_list[random.randint(0, len(response_list)-1)] + object_name
+        state = 'learn'
+    elif speech_string.find('what is this') > -1:
+        response_string = ""
+        state = 'what'
+    elif speech_string.find('start movement detection') > -1 or speech_string.find('online movement detection') > -1:
+        response_list = ["Ok, now I'm looking for a ",
+                         'Ok I will track the ',
+                         'Ready to track the ']
+        object_name = speech_string.rsplit(None, 1)[-1]
+        response_string = response_list[random.randint(0, len(response_list)-1)] + object_name
         state = 'movedetect on'
-    elif 'stop movement detection' in speech_string:
+    elif speech_string.find('stop movement detection') > -1:
         response_list = ["Ok, no more movements",
                          'Ok I will stop it',
                          "I'm gonna stop it!"]
         response_string = response_list[random.randint(0, len(response_list)-1)]
         state = 'movedetect off'
+    elif speech_string.find('save template') > -1:
+        response_list = ["Ok, new template acquired",
+                         'New template!']
+        response_string = response_list[random.randint(0, len(response_list)-1)]
+        state = 'template'
+    elif speech_string.find('look at me') > -1:
+        response_list = ["Ok!",
+                         'Sure!']
+        response_string = response_list[random.randint(0, len(response_list)-1)]
+        state = 'look'
     else:
-        response_list = ["Sorry I did not understand what you said.",
-                         'Sorry, What did you say?',
+        response_list = ["Sorry I did not understand.",
+                         'Sorry, can you repeat?',
                          'Repeat again please.']
         response_string = response_list[random.randint(0,len(response_list)-1)]
         state = 'key'
-
     return response_string, state
 
 
@@ -106,6 +114,7 @@ def main():
     speech_string = ""
     my_speech, my_icub = initialise()
     my_icub.say_something(text="I'm ready!")
+    cv2.namedWindow('main')
 
     while True:
         if STATE == 'record':
@@ -117,12 +126,17 @@ def main():
 
         elif STATE == 'understand':
             response_string, local_state = speech_to_action(speech_string)
+            print("[STATE " + str(STATE) + "] " + "Speech recognised: " + speech_string)
+            print("[STATE " + str(STATE) + "] " + "Next state: " + local_state)
             my_icub.say_something(text=response_string)
             STATE = local_state
 
         elif STATE == 'show':
-            left_image = my_icub.return_left_camera_image(mode='RGB')
-            cv2.imshow('left image', left_image)
+            left_image = my_icub.return_left_camera_image(mode='BGR')
+            img_cx = int(left_image.shape[1] / 2)
+            img_cy = int(left_image.shape[0] / 2)
+            cv2.rectangle(left_image, (img_cx-50, img_cy-50), (img_cx+30, img_cy+30), (0, 255, 0), 1)
+            cv2.imshow('main', left_image)
             STATE = 'key'
 
         elif STATE == 'move':
@@ -130,13 +144,61 @@ def main():
             STATE = 'key'
 
         elif STATE == 'movedetect on':
-            print("[STATE " + str(STATE) + "] " + "starting movement tracking" + "\n")
-            my_icub.start_movement_detection(delay=1.0)
+            object_name = response_string.rsplit(None, 1)[-1]
+            print("[STATE " + str(STATE) + "] " + "starting movement tracking of: " + str(object_name) + "\n")
+            object_path = "./objects/" + str(object_name) + ".png"
+            my_icub.start_movement_detection(template_path=object_path, delay=1.0)
             STATE = 'key'
 
         elif STATE == 'movedetect off':
             print("[STATE " + str(STATE) + "] " + "stopping movement tracking" + "\n")
             my_icub.stop_movement_detection()
+            STATE = 'key'
+
+        elif STATE == 'look':
+            print("[STATE " + str(STATE) + "] " + "gaze reset" + "\n")
+            my_icub.reset_head_pose()
+            STATE = 'key'
+
+        elif STATE == 'template':
+            print("[STATE " + str(STATE) + "] " + "Acquiring the image from left camera..." + "\n")
+            left_image = my_icub.return_left_camera_image(mode='BGR')
+            img_cx = int(left_image.shape[1] / 2)
+            img_cy = int(left_image.shape[0] / 2)
+            left_image = left_image[img_cy-25:img_cy+25, img_cx-25:img_cx+25]
+            print("[STATE " + str(STATE) + "] " + "Writing new template in ./template.png" + "\n")
+            cv2.imwrite('./template.png', left_image)
+            STATE = 'key'
+
+        elif STATE == 'learn':
+            object_name = response_string.rsplit(None, 1)[-1]
+            print("[STATE " + str(STATE) + "] " + "Learning new object: " + object_name + "\n")
+            left_image = my_icub.return_left_camera_image(mode='BGR')
+            img_cx = int(left_image.shape[1] / 2)
+            img_cy = int(left_image.shape[0] / 2)
+            left_image = left_image[img_cy-25:img_cy+25, img_cx-25:img_cx+25]
+            my_icub.learn_object_from_histogram(left_image, object_name)
+            print("[STATE " + str(STATE) + "] " + "Writing new template in ./objects/" + object_name + ".png" + "\n")
+            cv2.imwrite('./objects/' + str(object_name) + '.png', left_image)
+            STATE = 'key'
+
+        elif STATE == 'what':
+            print("[STATE " + str(STATE) + "] " + "Recalling object from memory..." + "\n")
+            left_image = my_icub.return_left_camera_image(mode='BGR')
+            img_cx = int(left_image.shape[1] / 2)
+            img_cy = int(left_image.shape[0] / 2)
+            left_image = left_image[img_cy-25:img_cy+25, img_cx-25:img_cx+25]
+            object_name = my_icub.recall_object_from_histogram(left_image)
+            if(object_name is None):
+                my_icub.say_something("My memory is empty. Teach me something!")
+            else:
+                print("[STATE " + str(STATE) + "] " + "Name returned: " + str(object_name) + "\n")
+                response_list = ["Let me see. I think this is a ",
+                                 "Let me think. It's a ",
+                                 "Just a second. It may be a ",
+                                 "It should be a "]
+                response_string = response_list[random.randint(0, len(response_list) - 1)]
+                my_icub.say_something(response_string + str(object_name))
             STATE = 'key'
 
         elif STATE == 'key':

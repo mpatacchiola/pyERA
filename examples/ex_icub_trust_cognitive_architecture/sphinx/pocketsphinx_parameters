@@ -1,0 +1,941 @@
+require 'awesome_print'
+ap Pocketsphinx::Configuration.default.details
+
+[
+    [  0] {
+            :name => "agc",
+            :type => :string,
+         :default => "none",
+        :required => false,
+           :value => "none",
+            :info => "Automatic gain control for c0 ('max', 'emax', 'noise', or 'none')"
+    },
+    [  1] {
+            :name => "agcthresh",
+            :type => :float,
+         :default => 2.0,
+        :required => false,
+           :value => 2.0,
+            :info => "Initial threshold for automatic gain control"
+    },
+    [  2] {
+            :name => "allphone",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Perform phoneme decoding with phonetic lm"
+    },
+    [  3] {
+            :name => "allphone_ci",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Perform phoneme decoding with phonetic lm and context-independent units only"
+    },
+    [  4] {
+            :name => "alpha",
+            :type => :float,
+         :default => 0.97,
+        :required => false,
+           :value => 0.97,
+            :info => "Preemphasis parameter"
+    },
+    [  5] {
+            :name => "ascale",
+            :type => :float,
+         :default => 20.0,
+        :required => false,
+           :value => 20.0,
+            :info => "Inverse of acoustic model scale for confidence score calculation"
+    },
+    [  6] {
+            :name => "aw",
+            :type => :integer,
+         :default => 1,
+        :required => false,
+           :value => 1,
+            :info => "Inverse weight applied to acoustic scores."
+    },
+    [  7] {
+            :name => "backtrace",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Print results and backtraces to log file."
+    },
+    [  8] {
+            :name => "beam",
+            :type => :float,
+         :default => 1.0e-48,
+        :required => false,
+           :value => 1.0e-48,
+            :info => "Beam width applied to every frame in Viterbi search (smaller values mean wider beam)"
+    },
+    [  9] {
+            :name => "bestpath",
+            :type => :boolean,
+         :default => true,
+        :required => false,
+           :value => true,
+            :info => "Run bestpath (Dijkstra) search over word lattice (3rd pass)"
+    },
+    [ 10] {
+            :name => "bestpathlw",
+            :type => :float,
+         :default => 9.5,
+        :required => false,
+           :value => 9.5,
+            :info => "Language model probability weight for bestpath search"
+    },
+    [ 11] {
+            :name => "bghist",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Bigram-mode: If TRUE only one BP entry/frame; else one per LM state"
+    },
+    [ 12] {
+            :name => "ceplen",
+            :type => :integer,
+         :default => 13,
+        :required => false,
+           :value => 13,
+            :info => "Number of components in the input feature vector"
+    },
+    [ 13] {
+            :name => "cmn",
+            :type => :string,
+         :default => "current",
+        :required => false,
+           :value => "current",
+            :info => "Cepstral mean normalization scheme ('current', 'prior', or 'none')"
+    },
+    [ 14] {
+            :name => "cmninit",
+            :type => :string,
+         :default => "8.0",
+        :required => false,
+           :value => "8.0",
+            :info => "Initial values (comma-separated) for cepstral mean when 'prior' is used"
+    },
+    [ 15] {
+            :name => "compallsen",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Compute all senone scores in every frame (can be faster when there are many senones)"
+    },
+    [ 16] {
+            :name => "debug",
+            :type => :integer,
+         :default => 0,
+        :required => false,
+           :value => 0,
+            :info => "Verbosity level for debugging messages"
+    },
+    [ 17] {
+            :name => "dict",
+            :type => :string,
+         :default => nil,
+        :required => true,
+           :value => "/usr/local/Cellar/cmu-pocketsphinx/HEAD/share/pocketsphinx/model/lm/en_US/cmu07a.dic",
+            :info => "Main pronunciation dictionary (lexicon) input file"
+    },
+    [ 18] {
+            :name => "dictcase",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Dictionary is case sensitive (NOTE: case insensitivity applies to ASCII characters only)"
+    },
+    [ 19] {
+            :name => "dither",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Add 1/2-bit noise"
+    },
+    [ 20] {
+            :name => "doublebw",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Use double bandwidth filters (same center freq)"
+    },
+    [ 21] {
+            :name => "ds",
+            :type => :integer,
+         :default => 1,
+        :required => false,
+           :value => 1,
+            :info => "Frame GMM computation downsampling ratio"
+    },
+    [ 22] {
+            :name => "fdict",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Noise word pronunciation dictionary input file"
+    },
+    [ 23] {
+            :name => "feat",
+            :type => :string,
+         :default => "1s_c_d_dd",
+        :required => false,
+           :value => "1s_c_d_dd",
+            :info => "Feature stream type, depends on the acoustic model"
+    },
+    [ 24] {
+            :name => "featparams",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "File containing feature extraction parameters."
+    },
+    [ 25] {
+            :name => "fillprob",
+            :type => :float,
+         :default => 1.0e-08,
+        :required => false,
+           :value => 1.0e-08,
+            :info => "Filler word transition probability"
+    },
+    [ 26] {
+            :name => "frate",
+            :type => :integer,
+         :default => 100,
+        :required => false,
+           :value => 100,
+            :info => "Frame rate"
+    },
+    [ 27] {
+            :name => "fsg",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Sphinx format finite state grammar file"
+    },
+    [ 28] {
+            :name => "fsgusealtpron",
+            :type => :boolean,
+         :default => true,
+        :required => false,
+           :value => true,
+            :info => "Add alternate pronunciations to FSG"
+    },
+    [ 29] {
+            :name => "fsgusefiller",
+            :type => :boolean,
+         :default => true,
+        :required => false,
+           :value => true,
+            :info => "Insert filler words at each state."
+    },
+    [ 30] {
+            :name => "fwdflat",
+            :type => :boolean,
+         :default => true,
+        :required => false,
+           :value => true,
+            :info => "Run forward flat-lexicon search over word lattice (2nd pass)"
+    },
+    [ 31] {
+            :name => "fwdflatbeam",
+            :type => :float,
+         :default => 1.0e-64,
+        :required => false,
+           :value => 1.0e-64,
+            :info => "Beam width applied to every frame in second-pass flat search"
+    },
+    [ 32] {
+            :name => "fwdflatefwid",
+            :type => :integer,
+         :default => 4,
+        :required => false,
+           :value => 4,
+            :info => "Minimum number of end frames for a word to be searched in fwdflat search"
+    },
+    [ 33] {
+            :name => "fwdflatlw",
+            :type => :float,
+         :default => 8.5,
+        :required => false,
+           :value => 8.5,
+            :info => "Language model probability weight for flat lexicon (2nd pass) decoding"
+    },
+    [ 34] {
+            :name => "fwdflatsfwin",
+            :type => :integer,
+         :default => 25,
+        :required => false,
+           :value => 25,
+            :info => "Window of frames in lattice to search for successor words in fwdflat search "
+    },
+    [ 35] {
+            :name => "fwdflatwbeam",
+            :type => :float,
+         :default => 7.0e-29,
+        :required => false,
+           :value => 7.0e-29,
+            :info => "Beam width applied to word exits in second-pass flat search"
+    },
+    [ 36] {
+            :name => "fwdtree",
+            :type => :boolean,
+         :default => true,
+        :required => false,
+           :value => true,
+            :info => "Run forward lexicon-tree search (1st pass)"
+    },
+    [ 37] {
+            :name => "hmm",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => "/usr/local/Cellar/cmu-pocketsphinx/HEAD/share/pocketsphinx/model/hmm/en_US/hub4wsj_sc_8k",
+            :info => "Directory containing acoustic model files."
+    },
+    [ 38] {
+            :name => "input_endian",
+            :type => :string,
+         :default => "little",
+        :required => false,
+           :value => "little",
+            :info => "Endianness of input data, big or little, ignored if NIST or MS Wav"
+    },
+    [ 39] {
+            :name => "jsgf",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "JSGF grammar file"
+    },
+    [ 40] {
+            :name => "kdmaxbbi",
+            :type => :integer,
+         :default => -1,
+        :required => false,
+           :value => -1,
+            :info => "Maximum number of Gaussians per leaf node in kd-Trees"
+    },
+    [ 41] {
+            :name => "kdmaxdepth",
+            :type => :integer,
+         :default => 0,
+        :required => false,
+           :value => 0,
+            :info => "Maximum depth of kd-Trees to use"
+    },
+    [ 42] {
+            :name => "kdtree",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "kd-Tree file for Gaussian selection"
+    },
+    [ 43] {
+            :name => "keyphrase",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Keyphrase to spot"
+    },
+    [ 44] {
+            :name => "kws",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "A file with keyphrases to spot, one per line"
+    },
+    [ 45] {
+            :name => "kws_plp",
+            :type => :float,
+         :default => 0.1,
+        :required => false,
+           :value => 0.1,
+            :info => "Phone loop probability for keyword spotting"
+    },
+    [ 46] {
+            :name => "kws_threshold",
+            :type => :float,
+         :default => 1.0,
+        :required => false,
+           :value => 1.0,
+            :info => "Threshold for p(hyp)/p(alternatives) ratio"
+    },
+    [ 47] {
+            :name => "latsize",
+            :type => :integer,
+         :default => 5000,
+        :required => false,
+           :value => 5000,
+            :info => "Initial backpointer table size"
+    },
+    [ 48] {
+            :name => "lda",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "File containing transformation matrix to be applied to features (single-stream features only)"
+    },
+    [ 49] {
+            :name => "ldadim",
+            :type => :integer,
+         :default => 0,
+        :required => false,
+           :value => 0,
+            :info => "Dimensionality of output of feature transformation (0 to use entire matrix)"
+    },
+    [ 50] {
+            :name => "lextreedump",
+            :type => :integer,
+         :default => 0,
+        :required => false,
+           :value => 0,
+            :info => "Whether to dump the lextree structure to stderr (for debugging), 1 for Ravi's format, 2 for Dot format, Larger than 2 will be treated as Ravi's format"
+    },
+    [ 51] {
+            :name => "lifter",
+            :type => :integer,
+         :default => 0,
+        :required => false,
+           :value => 0,
+            :info => "Length of sin-curve for liftering, or 0 for no liftering."
+    },
+    [ 52] {
+            :name => "lm",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => "/usr/local/Cellar/cmu-pocketsphinx/HEAD/share/pocketsphinx/model/lm/en_US/hub4.5000.DMP",
+            :info => "Word trigram language model input file"
+    },
+    [ 53] {
+            :name => "lmctl",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Specify a set of language model\n"
+    },
+    [ 54] {
+            :name => "lmname",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Which language model in -lmctl to use by default"
+    },
+    [ 55] {
+            :name => "logbase",
+            :type => :float,
+         :default => 1.0001,
+        :required => false,
+           :value => 1.0001,
+            :info => "Base in which all log-likelihoods calculated"
+    },
+    [ 56] {
+            :name => "logfn",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "File to write log messages in"
+    },
+    [ 57] {
+            :name => "logspec",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Write out logspectral files instead of cepstra"
+    },
+    [ 58] {
+            :name => "lowerf",
+            :type => :float,
+         :default => 133.33334,
+        :required => false,
+           :value => 133.33334,
+            :info => "Lower edge of filters"
+    },
+    [ 59] {
+            :name => "lpbeam",
+            :type => :float,
+         :default => 1.0e-40,
+        :required => false,
+           :value => 1.0e-40,
+            :info => "Beam width applied to last phone in words"
+    },
+    [ 60] {
+            :name => "lponlybeam",
+            :type => :float,
+         :default => 7.0e-29,
+        :required => false,
+           :value => 7.0e-29,
+            :info => "Beam width applied to last phone in single-phone words"
+    },
+    [ 61] {
+            :name => "lw",
+            :type => :float,
+         :default => 6.5,
+        :required => false,
+           :value => 6.5,
+            :info => "Language model probability weight"
+    },
+    [ 62] {
+            :name => "maxhmmpf",
+            :type => :integer,
+         :default => 10000,
+        :required => false,
+           :value => 10000,
+            :info => "Maximum number of active HMMs to maintain at each frame (or -1 for no pruning)"
+    },
+    [ 63] {
+            :name => "maxnewoov",
+            :type => :integer,
+         :default => 20,
+        :required => false,
+           :value => 20,
+            :info => "Maximum new OOVs that can be added at run time"
+    },
+    [ 64] {
+            :name => "maxwpf",
+            :type => :integer,
+         :default => -1,
+        :required => false,
+           :value => -1,
+            :info => "Maximum number of distinct word exits at each frame (or -1 for no pruning)"
+    },
+    [ 65] {
+            :name => "mdef",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Model definition input file"
+    },
+    [ 66] {
+            :name => "mean",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Mixture gaussian means input file"
+    },
+    [ 67] {
+            :name => "mfclogdir",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Directory to log feature files to"
+    },
+    [ 68] {
+            :name => "min_endfr",
+            :type => :integer,
+         :default => 0,
+        :required => false,
+           :value => 0,
+            :info => "Nodes ignored in lattice construction if they persist for fewer than N frames"
+    },
+    [ 69] {
+            :name => "mixw",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Senone mixture weights input file (uncompressed)"
+    },
+    [ 70] {
+            :name => "mixwfloor",
+            :type => :float,
+         :default => 1.0e-07,
+        :required => false,
+           :value => 1.0e-07,
+            :info => "Senone mixture weights floor (applied to data from -mixw file)"
+    },
+    [ 71] {
+            :name => "mllr",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "MLLR transformation to apply to means and variances"
+    },
+    [ 72] {
+            :name => "mmap",
+            :type => :boolean,
+         :default => true,
+        :required => false,
+           :value => true,
+            :info => "Use memory-mapped I/O (if possible) for model files"
+    },
+    [ 73] {
+            :name => "ncep",
+            :type => :integer,
+         :default => 13,
+        :required => false,
+           :value => 13,
+            :info => "Number of cep coefficients"
+    },
+    [ 74] {
+            :name => "nfft",
+            :type => :integer,
+         :default => 512,
+        :required => false,
+           :value => 512,
+            :info => "Size of FFT"
+    },
+    [ 75] {
+            :name => "nfilt",
+            :type => :integer,
+         :default => 40,
+        :required => false,
+           :value => 40,
+            :info => "Number of filter banks"
+    },
+    [ 76] {
+            :name => "nwpen",
+            :type => :float,
+         :default => 1.0,
+        :required => false,
+           :value => 1.0,
+            :info => "New word transition penalty"
+    },
+    [ 77] {
+            :name => "pbeam",
+            :type => :float,
+         :default => 1.0e-48,
+        :required => false,
+           :value => 1.0e-48,
+            :info => "Beam width applied to phone transitions"
+    },
+    [ 78] {
+            :name => "pip",
+            :type => :float,
+         :default => 1.0,
+        :required => false,
+           :value => 1.0,
+            :info => "Phone insertion penalty"
+    },
+    [ 79] {
+            :name => "pl_beam",
+            :type => :float,
+         :default => 1.0e-10,
+        :required => false,
+           :value => 1.0e-10,
+            :info => "Beam width applied to phone loop search for lookahead"
+    },
+    [ 80] {
+            :name => "pl_pbeam",
+            :type => :float,
+         :default => 1.0e-05,
+        :required => false,
+           :value => 1.0e-05,
+            :info => "Beam width applied to phone loop transitions for lookahead"
+    },
+    [ 81] {
+            :name => "pl_window",
+            :type => :integer,
+         :default => 0,
+        :required => false,
+           :value => 0,
+            :info => "Phoneme lookahead window size, in frames"
+    },
+    [ 82] {
+            :name => "rawlogdir",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Directory to log raw audio files to"
+    },
+    [ 83] {
+            :name => "remove_dc",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Remove DC offset from each frame"
+    },
+    [ 84] {
+            :name => "remove_noise",
+            :type => :boolean,
+         :default => true,
+        :required => false,
+           :value => true,
+            :info => "Remove noise with spectral subtraction in mel-energies"
+    },
+    [ 85] {
+            :name => "remove_silence",
+            :type => :boolean,
+         :default => true,
+        :required => false,
+           :value => true,
+            :info => "Enables VAD, removes silence frames from processing"
+    },
+    [ 86] {
+            :name => "round_filters",
+            :type => :boolean,
+         :default => true,
+        :required => false,
+           :value => true,
+            :info => "Round mel filter frequencies to DFT points"
+    },
+    [ 87] {
+            :name => "samprate",
+            :type => :float,
+         :default => 16000.0,
+        :required => false,
+           :value => 16000.0,
+            :info => "Sampling rate"
+    },
+    [ 88] {
+            :name => "seed",
+            :type => :integer,
+         :default => -1,
+        :required => false,
+           :value => -1,
+            :info => "Seed for random number generator; if less than zero, pick our own"
+    },
+    [ 89] {
+            :name => "sendump",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Senone dump (compressed mixture weights) input file"
+    },
+    [ 90] {
+            :name => "senlogdir",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Directory to log senone score files to"
+    },
+    [ 91] {
+            :name => "senmgau",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Senone to codebook mapping input file (usually not needed)"
+    },
+    [ 92] {
+            :name => "silprob",
+            :type => :float,
+         :default => 0.005,
+        :required => false,
+           :value => 0.005,
+            :info => "Silence word transition probability"
+    },
+    [ 93] {
+            :name => "smoothspec",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Write out cepstral-smoothed logspectral files"
+    },
+    [ 94] {
+            :name => "svspec",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Subvector specification (e.g., 24,0-11/25,12-23/26-38 or 0-12/13-25/26-38)"
+    },
+    [ 95] {
+            :name => "tmat",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "HMM state transition matrix input file"
+    },
+    [ 96] {
+            :name => "tmatfloor",
+            :type => :float,
+         :default => 0.0001,
+        :required => false,
+           :value => 0.0001,
+            :info => "HMM state transition probability floor (applied to -tmat file)"
+    },
+    [ 97] {
+            :name => "topn",
+            :type => :integer,
+         :default => 4,
+        :required => false,
+           :value => 4,
+            :info => "Maximum number of top Gaussians to use in scoring."
+    },
+    [ 98] {
+            :name => "topn_beam",
+            :type => :string,
+         :default => "0",
+        :required => false,
+           :value => "0",
+            :info => "Beam width used to determine top-N Gaussians (or a list, per-feature)"
+    },
+    [ 99] {
+            :name => "toprule",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Start rule for JSGF (first public rule is default)"
+    },
+    [100] {
+            :name => "transform",
+            :type => :string,
+         :default => "legacy",
+        :required => false,
+           :value => "legacy",
+            :info => "Which type of transform to use to calculate cepstra (legacy, dct, or htk)"
+    },
+    [101] {
+            :name => "unit_area",
+            :type => :boolean,
+         :default => true,
+        :required => false,
+           :value => true,
+            :info => "Normalize mel filters to unit area"
+    },
+    [102] {
+            :name => "upperf",
+            :type => :float,
+         :default => 6855.4976,
+        :required => false,
+           :value => 6855.4976,
+            :info => "Upper edge of filters"
+    },
+    [103] {
+            :name => "usewdphones",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Use within-word phones only"
+    },
+    [104] {
+            :name => "uw",
+            :type => :float,
+         :default => 1.0,
+        :required => false,
+           :value => 1.0,
+            :info => "Unigram weight"
+    },
+    [105] {
+            :name => "vad_postspeech",
+            :type => :integer,
+         :default => 50,
+        :required => false,
+           :value => 50,
+            :info => "Num of silence frames to trigger vad from speech to silence."
+    },
+    [106] {
+            :name => "vad_prespeech",
+            :type => :integer,
+         :default => 10,
+        :required => false,
+           :value => 10,
+            :info => "Num of speech frames to trigger vad from silence to speech."
+    },
+    [107] {
+            :name => "vad_threshold",
+            :type => :float,
+         :default => 2.0,
+        :required => false,
+           :value => 2.0,
+            :info => "Threshold for decision between noise and silence frames. Log-ratio between signal level and noise level."
+    },
+    [108] {
+            :name => "var",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Mixture gaussian variances input file"
+    },
+    [109] {
+            :name => "varfloor",
+            :type => :float,
+         :default => 0.0001,
+        :required => false,
+           :value => 0.0001,
+            :info => "Mixture gaussian variance floor (applied to data from -var file)"
+    },
+    [110] {
+            :name => "varnorm",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Variance normalize each utterance (only if CMN == current)"
+    },
+    [111] {
+            :name => "verbose",
+            :type => :boolean,
+         :default => false,
+        :required => false,
+           :value => false,
+            :info => "Show input filenames"
+    },
+    [112] {
+            :name => "warp_params",
+            :type => :string,
+         :default => nil,
+        :required => false,
+           :value => nil,
+            :info => "Parameters defining the warping function"
+    },
+    [113] {
+            :name => "warp_type",
+            :type => :string,
+         :default => "inverse_linear",
+        :required => false,
+           :value => "inverse_linear",
+            :info => "Warping function type (or shape)"
+    },
+    [114] {
+            :name => "wbeam",
+            :type => :float,
+         :default => 7.0e-29,
+        :required => false,
+           :value => 7.0e-29,
+            :info => "Beam width applied to word exits"
+    },
+    [115] {
+            :name => "wip",
+            :type => :float,
+         :default => 0.65,
+        :required => false,
+           :value => 0.65,
+            :info => "Word insertion penalty"
+    },
+    [116] {
+            :name => "wlen",
+            :type => :float,
+         :default => 0.025625,
+        :required => false,
+           :value => 0.025625,
+            :info => "Hamming window length"
+    }
+]
