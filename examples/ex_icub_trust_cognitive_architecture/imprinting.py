@@ -22,12 +22,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+#ATTENTION: to work it requires to lunch the iCub world:
+# yarpserver
+# ./iCub_SIM
+# ./iKinGazeCtrl --from configSim.ini
+# yarpdev --device opencv_grabber
+# yarp connect /grabber /icubSim/texture/screen
+#
+# For the cartesian controller of the left arm
+# ./simCartesianControl
+# ./iKinCartesianSolver --context simCartesianControl --part left_arm
+
 from speech_recognition import SpeechRecognizer
 from icub import iCub
 import cv2
 import random
-import thread
 import time
+import os
 
 def initialise():
     # Initialise the speech recognition engine and the iCub controller
@@ -60,14 +71,7 @@ def speech_to_action(speech_string):
     @param speech_string: 
     @return: 
     """
-    if speech_string.find('find') > -1 or speech_string.find('search') > -1:
-        response_list = ['All right! I will find the ',
-                         'Ok, I will look for the ',
-                         'Searching the ',
-                         'I am looking for a ']
-        response_string = response_list[random.randint(0,len(response_list)-1)] + speech_string.rsplit(None, 1)[-1]
-        state = 'key'
-    elif speech_string.find('learn new object') > -1:
+    if speech_string.find('learn') > -1 or speech_string.find('this is a') > -1:
         response_list = ['I like to learn! This is a ',
                          'Ok, this is a ',
                          '']
@@ -77,24 +81,25 @@ def speech_to_action(speech_string):
     elif speech_string.find('what is this') > -1:
         response_string = ""
         state = 'what'
-    elif speech_string.find('start movement detection') > -1 or speech_string.find('online movement detection') > -1:
-        response_list = ["Ok, now I'm looking for a ",
-                         'Ok I will track the ',
-                         'Ready to track the ']
+    elif speech_string.find('find the') > -1 or speech_string.find('search the') > -1:
         object_name = speech_string.rsplit(None, 1)[-1]
-        response_string = response_list[random.randint(0, len(response_list)-1)] + object_name
-        state = 'movedetect on'
-    elif speech_string.find('stop movement detection') > -1:
+        object_path = "./objects/" + str(object_name) + ".png"
+        if not os.path.isfile(object_path):
+            print("[SPEECH-TO-ACTION][WARNING] " + "this file does not exist: " + str(object_path) + "\n")
+            response_string = "Sorry I do not know this object!"
+            state = 'key'
+        else:
+            response_list = ["Ok, now I'm looking for a ",
+                             'Ok I will track the ',
+                             'Ready to track the ']
+            response_string = response_list[random.randint(0, len(response_list)-1)] + object_name
+            state = 'movedetect on'
+    elif speech_string.find('stop detection') > -1:
         response_list = ["Ok, no more movements",
                          'Ok I will stop it',
                          "I'm gonna stop it!"]
         response_string = response_list[random.randint(0, len(response_list)-1)]
         state = 'movedetect off'
-    elif speech_string.find('save template') > -1:
-        response_list = ["Ok, new template acquired",
-                         'New template!']
-        response_string = response_list[random.randint(0, len(response_list)-1)]
-        state = 'template'
     elif speech_string.find('look at me') > -1:
         response_list = ["Ok!",
                          'Sure!']
@@ -112,13 +117,21 @@ def speech_to_action(speech_string):
 def main():
     STATE = 'show'
     speech_string = ""
+    fovea_offset = 40 # side of the fovea square
     my_speech, my_icub = initialise()
+    is_connected = my_icub.check_connection()
+    if is_connected:
+        print("[STATE Init] intenet connection present.")
+    else:
+        print("[STATE Init][ERROR] internet connection not present!!!")
     my_icub.say_something(text="I'm ready!")
     cv2.namedWindow('main')
 
+
     while True:
         if STATE == 'record':
-            my_speech.record_audio("/tmp/audio.wav", seconds=4, extension='wav', harddev='3,0')
+            #image = my_icub.return_left_camera_image(mode='BGR')
+            my_speech.record_audio("/tmp/audio.wav", seconds=3, extension='wav', harddev='3,0')
             raw_file_path = my_speech.convert_to_raw(file_name="/tmp/audio.wav", file_name_raw="/tmp/audio.raw", extension='wav')
             speech_string = my_speech.return_text_from_audio("/tmp/audio.raw")
             print("[STATE " + str(STATE) + "] " + "Speech recognised: " + speech_string)
@@ -135,24 +148,30 @@ def main():
             left_image = my_icub.return_left_camera_image(mode='BGR')
             img_cx = int(left_image.shape[1] / 2)
             img_cy = int(left_image.shape[0] / 2)
-            cv2.rectangle(left_image, (img_cx-50, img_cy-50), (img_cx+30, img_cy+30), (0, 255, 0), 1)
+            cv2.rectangle(left_image,
+                          (img_cx-fovea_offset, img_cy-fovea_offset),
+                          (img_cx+fovea_offset, img_cy+fovea_offset),
+                          (0, 255, 0), 1)
             cv2.imshow('main', left_image)
-            STATE = 'key'
-
-        elif STATE == 'move':
-            my_icub.set_head_pose(0, -40, random.randint(a=-20, b=+20))
             STATE = 'key'
 
         elif STATE == 'movedetect on':
             object_name = response_string.rsplit(None, 1)[-1]
-            print("[STATE " + str(STATE) + "] " + "starting movement tracking of: " + str(object_name) + "\n")
+            print("[STATE " + str(STATE) + "] " + "start tracking of: " + str(object_name) + "\n")
             object_path = "./objects/" + str(object_name) + ".png"
-            my_icub.start_movement_detection(template_path=object_path, delay=1.0)
+            if my_icub.is_movement_detection():
+                    my_icub.stop_movement_detection()
+                    time.sleep(0.5)
+                    my_icub.start_movement_detection(template_path=object_path, delay=1.0)
+            else:
+                    my_icub.start_movement_detection(template_path=object_path, delay=1.0)
             STATE = 'key'
 
         elif STATE == 'movedetect off':
-            print("[STATE " + str(STATE) + "] " + "stopping movement tracking" + "\n")
+            print("[STATE " + str(STATE) + "] " + "stop movement tracking" + "\n")
             my_icub.stop_movement_detection()
+            time.sleep(0.5)
+            my_icub.reset_head_pose()
             STATE = 'key'
 
         elif STATE == 'look':
@@ -160,23 +179,15 @@ def main():
             my_icub.reset_head_pose()
             STATE = 'key'
 
-        elif STATE == 'template':
-            print("[STATE " + str(STATE) + "] " + "Acquiring the image from left camera..." + "\n")
-            left_image = my_icub.return_left_camera_image(mode='BGR')
-            img_cx = int(left_image.shape[1] / 2)
-            img_cy = int(left_image.shape[0] / 2)
-            left_image = left_image[img_cy-25:img_cy+25, img_cx-25:img_cx+25]
-            print("[STATE " + str(STATE) + "] " + "Writing new template in ./template.png" + "\n")
-            cv2.imwrite('./template.png', left_image)
-            STATE = 'key'
-
         elif STATE == 'learn':
             object_name = response_string.rsplit(None, 1)[-1]
             print("[STATE " + str(STATE) + "] " + "Learning new object: " + object_name + "\n")
             left_image = my_icub.return_left_camera_image(mode='BGR')
+            #left_image = image
             img_cx = int(left_image.shape[1] / 2)
             img_cy = int(left_image.shape[0] / 2)
-            left_image = left_image[img_cy-25:img_cy+25, img_cx-25:img_cx+25]
+            left_image = left_image[img_cy-fovea_offset:img_cy+fovea_offset,
+                                    img_cx-fovea_offset:img_cx+fovea_offset]
             my_icub.learn_object_from_histogram(left_image, object_name)
             print("[STATE " + str(STATE) + "] " + "Writing new template in ./objects/" + object_name + ".png" + "\n")
             cv2.imwrite('./objects/' + str(object_name) + '.png', left_image)
@@ -185,11 +196,12 @@ def main():
         elif STATE == 'what':
             print("[STATE " + str(STATE) + "] " + "Recalling object from memory..." + "\n")
             left_image = my_icub.return_left_camera_image(mode='BGR')
+            #left_image = image
             img_cx = int(left_image.shape[1] / 2)
             img_cy = int(left_image.shape[0] / 2)
             left_image = left_image[img_cy-25:img_cy+25, img_cx-25:img_cx+25]
             object_name = my_icub.recall_object_from_histogram(left_image)
-            if(object_name is None):
+            if object_name is None:
                 my_icub.say_something("My memory is empty. Teach me something!")
             else:
                 print("[STATE " + str(STATE) + "] " + "Name returned: " + str(object_name) + "\n")

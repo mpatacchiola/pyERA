@@ -28,21 +28,22 @@
 # ./iKinGazeCtrl --from configSim.ini
 # yarpdev --device opencv_grabber
 # yarp connect /grabber /icubSim/texture/screen
+#
+# For the cartesian controller of the left arm
+# ./simCartesianControl
+# ./iKinCartesianSolver --context simCartesianControl --part left_arm
 
 import numpy as np
 import cv2
 import time
-import sys
 import yarp
 import acapela
 import subprocess
 import csv
-import deepgaze
 from deepgaze.color_classification import HistogramColorClassifier
 from deepgaze.color_detection import BackProjectionColorDetector
 from deepgaze.motion_detection import MogMotionDetector
 from deepgaze.mask_analysis import BinaryMaskAnalyser
-import thread
 import threading
 import random
 
@@ -87,6 +88,15 @@ class iCub:
             return
 
         try:
+            if icub_root.find("Sim") > -1:
+                print("[ICUB] Simulation Mode, connecting grabber to texture/screen ")
+                # yarp connect /grabber /icubSim/texture/screen
+                yarp.Network.connect("/grabber", icub_root + "/texture/screen")
+        except BaseException, err:
+            print("[ICUB][ERROR] connecting /grabber to /texture/screen catching error " + str(err))
+            return
+
+        try:
             self.port_ikin_mono = yarp.Port()
             self.port_ikin_mono.open("/pyera-ikin-mono")
             yarp.Network.connect("/pyera-ikin-mono", "/iKinGazeCtrl/mono:i")
@@ -110,12 +120,19 @@ class iCub:
             print("[ICUB][ERROR] connect To iKinGazeCtrl/xd catching error " + str(err))
             return
 
+        try:
+            self.port_cart_leftarm = yarp.Port()
+            self.port_cart_leftarm.open("/pyera-cart-leftarm")
+            yarp.Network.connect("/pyera-cart-leftarm", "/cartesianSolver/left_arm/in")
+        except BaseException, err:
+            print("[ICUB][ERROR] connect To /cartesianSolver/left_arm/in catching error " + str(err))
+            return
+
         self.rpc_client_head = yarp.RpcClient()
         self.rpc_client_head.addOutput(icub_root+"/head/rpc:i")
 
         self.rpc_client_head_ikin = yarp.RpcClient()
         self.rpc_client_head_ikin.addOutput("/iKinGazeCtrl/rpc")
-
 
     def close(self):
         """Close all the services
@@ -124,6 +141,20 @@ class iCub:
         self.port_left_camera.close()
         self.port_right_camera.close()
         self.rpc_client_head.close()
+
+    def check_connection(self):
+        """Check if the internet connection is present or not
+        
+        @return: True if connected, otherwise False
+        """
+        import socket
+        try:
+            host = socket.gethostbyname("www.google.com")
+            socket.create_connection((host, 80), 2)
+            return True
+        except:
+            pass
+        return False
 
     def return_left_camera_image(self, mode='RGB'):
         """Return a numpy array with the LEFT camera image
@@ -160,6 +191,36 @@ class iCub:
             return cv2.cvtColor(self.img_array, cv2.COLOR_BGR2GRAY)
         else:
             return self.img_array
+
+    def _set_pose_left_hand(self, x, y, z, ax, ay, az, theta):
+        """ This is a low level function which must be used carefully.
+        
+        It allows setting the position and orientation of the left hand.
+        @param x: the x position (negative to move in front of the robot)
+        @param y: the y position (negative to move on the left side of the robot)
+        @param z: the z position (positive to move up)
+        @param ax: the x orientation (zero for hand touching the left lef)
+        @param ay: the y orientation (zero for hand touching left leg)
+        @param az: the z orientation (zero for hand touching the left leg)
+        @param theta: the angle theta
+        """
+        bottle = yarp.Bottle()
+        bottle.clear()
+        bottle.addString('xd')
+        tmp0 = bottle.addList()
+        tmp0.addDouble(x)
+        tmp0.addDouble(y)
+        tmp0.addDouble(z)
+        tmp0.addDouble(ax)
+        tmp0.addDouble(ay)
+        tmp0.addDouble(az)
+        tmp0.addDouble(theta)
+        self.port_cart_leftarm.write(bottle)
+
+    #TODO: This function must be implemented for a safe object manipulation
+    # def move_left_hand_to_position(self, x, y, z):
+    #    self._set_pose_left_hand(x, y, z, 0, 0, 0, 0)
+
 
     def move_head_to_target_mono(self, type, u, v, z):
         """ given a point in the image (mono) it moves the head
@@ -292,6 +353,13 @@ class iCub:
         except:
             print "[ICUB][ERROR] unable to stop head control thread. Is it running?"
 
+    def is_movement_detection(self):
+        """Check if the movement tracking is active
+        
+        @return: return True if the movement tracking is active 
+        """
+        return self.thread_movement_detection.isAlive()
+
     def set_head_pose(self, roll, pitch, yaw):
         """It sets the icub head using the RPC port
            HEAD axes: 0=Pitch, 1=Roll, 2=Yaw
@@ -392,7 +460,7 @@ class iCub:
         @param type: 'let' or 'right' camera
         @param u: pixel coordinate x
         @param v: pixel coordinate y
-        @param z: third component (eye reference frame)
+        @param z: third component point in front of the robot (eye reference frame)
         @return: the 3D point (x,y,z) coordinates
         """
         bottle = yarp.Bottle()
@@ -486,16 +554,25 @@ class iCub:
         print "[ICUB][PLAY] reproducing the acapela file"
 
     def learn_object_from_histogram(self, template, name):
-        self.histogram_classifier.addModelHistogram(template)
-        self.object_list.append(name)
+        """Using the deepgaze histogram classifier to save an object.
+        
+        @param template: the image template to store
+        @param name: the name of the model (must be a unique ID)
+        """
+        self.histogram_classifier.addModelHistogram(template, name)
 
     def recall_object_from_histogram(self, template):
-        if(len(self.object_list) == 0): return None
-        comparison_array = self.histogram_classifier.returnHistogramComparisonArray(template, method="intersection")
-        comparison_distribution = comparison_array / np.sum(comparison_array)
-        return self.object_list[np.argmax(comparison_distribution)]
+        """Return the name of the object with the closest similarity to the template.
+        
+        @param template: the image to recall
+        @return: the name of the object with closest similarity
+        """
+        if self.histogram_classifier.returnSize() == 0:
+            return None
+        else:
+            return self.histogram_classifier.returnBestMatchIndexName(template, method="intersection")
 
-'''
+"""
 def main():
     my_cub = iCub()
     #my_cub.return_left_camera_image()
@@ -510,11 +587,13 @@ def main():
     #my_cub.move_head_to_target(type='left', u=50, v=50, z=0.5)
     my_cub.reset_head_pose()
     #my_cub.move_head_to_target_mono(type='left', u=0, v=0, z=0.5)
-    time.sleep(2)
-    my_cub.start_movement_detection()
-    time.sleep(30)
-    my_cub.stop_movement_detection()
+    #time.sleep(2)
+    #my_cub.start_movement_detection()
+    #time.sleep(30)
+    #my_cub.stop_movement_detection()
+    my_cub._set_pose_left_hand(-0.1, -0.4, 0.0, 0, 0, 0, 0.0)
+    #my_cub.move_left_hand_to_position(-0.3, -0.3, 0.3)
 
 if __name__ == "__main__":
     main()
-'''
+"""
