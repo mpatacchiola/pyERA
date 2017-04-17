@@ -49,6 +49,7 @@ import cv2
 import random
 import time
 import os
+import sys
 
 def initialise():
     # Initialise the speech recognition engine and the iCub controller
@@ -89,13 +90,6 @@ def speech_to_action(speech_string):
         object_name = speech_string.rsplit(None, 1)[-1]
         response_string = response_list[random.randint(0, len(response_list)-1)] + object_name
         state = 'learn'
-    elif speech_string.find('forget') > -1:
-            response_list = ['Fine, I will remove the  ',
-                             'Ok, I will forget the  ',
-                             'Removing object, ']
-            object_name = speech_string.rsplit(None, 1)[-1]
-            response_string = response_list[random.randint(0, len(response_list) - 1)] + object_name
-            state = 'forget'
     elif speech_string.find('what is this') > -1:
         response_string = ""
         state = 'what'
@@ -133,6 +127,20 @@ def speech_to_action(speech_string):
 
 
 def main():
+    inputfile = ''
+    outputfile = ''
+    informant_name = ''
+    if len(sys.argv) == 1 or len(sys.argv) > 4:
+        print("python familiarization.py <inputfile> <outputfilename> <informant_name>")
+    elif len(sys.argv) == 4:
+        inputfile = sys.argv[1]
+        outputfile = sys.argv[2]
+        informant_name = sys.argv[3]
+
+    print("Input file: " + str(inputfile))
+    print("Output file: " + str(outputfile))
+    print("Informant Name: " + str(informant_name))
+
     STATE = 'show'
     speech_string = ""
     fovea_offset = 40 # side of the fovea square
@@ -209,13 +217,6 @@ def main():
             my_icub.learn_object_from_histogram(left_image, object_name)
             print("[STATE " + str(STATE) + "] " + "Writing new template in ./objects/" + object_name + ".png" + "\n")
             cv2.imwrite('./objects/' + str(object_name) + '.png', left_image)
-            STATE = 'key'
-
-        elif STATE == 'forget':
-            object_name = response_string.rsplit(None, 1)[-1]
-            print("[STATE " + str(STATE) + "] " + "Forgetting object: " + object_name + "\n")
-            my_icub.remove_object_from_histogram(object_name)
-            os.remove('./objects/' + str(object_name) + '.png')
             STATE = 'key'
 
         elif STATE == 'what':

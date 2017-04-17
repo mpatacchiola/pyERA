@@ -63,7 +63,7 @@ class iCub:
                                                              hist_range=[0, 256, 0, 256, 0, 256], hist_type='BGR')
 
         # Init YARP
-        yarp.Network.init()        
+        yarp.Network.init()
         # Camera connection
         try:
             cam_w = 320  # 640
@@ -317,7 +317,8 @@ class iCub:
         while getattr(t, "do_run", True):
             #img_array = np.zeros((360,240,3), dtype=np.uint8)
             img_array = self.return_left_camera_image(mode='BGR')
-            image_filtered = my_back_detector.returnFiltered(img_array, morph_opening=True, blur=True, kernel_size=7, iterations=2)
+            image_filtered = my_back_detector.returnFiltered(img_array, morph_opening=True,
+                                                             blur=True, kernel_size=7, iterations=2)
             cx, cy = my_mask_analyser.returnMaxAreaCenter(image_filtered)
             if cx is not None:
                 cv2.circle(image_filtered,(cx,cy), 5, (0, 0, 255), -1)
@@ -337,7 +338,8 @@ class iCub:
     def start_movement_detection(self, template_path, delay=1.0):
         try:
             if not self.thread_movement_detection.isAlive():
-                self.thread_movement_detection = threading.Thread(target=self._track_movement, args=(template_path, 0.5,))
+                self.thread_movement_detection = threading.Thread(target=self._track_movement,
+                                                                  args=(template_path, 0.5,))
                 self.thread_movement_detection.start()
                 print "[ICUB] Head control thread started!"
         except:
@@ -534,7 +536,8 @@ class iCub:
         '''Return the ACAPELA config parameters
 
         '''
-        return self.acapela_account_login, self.acapela_application_login, self.acapela_application_password, self.acapela_service_url
+        return self.acapela_account_login, self.acapela_application_login, \
+               self.acapela_application_password, self.acapela_service_url
 
     def say_something(self, text, directory='/tmp/', in_background=True):
         """It says something using ACAPELA tts
@@ -560,6 +563,14 @@ class iCub:
         @param name: the name of the model (must be a unique ID)
         """
         self.histogram_classifier.addModelHistogram(template, name)
+
+    def remove_object_from_histogram(self, name):
+        """Given an object remove it from the list
+        
+        @param name: the name of the object. 
+        @return: True if the object has been deleted
+        """
+        return self.histogram_classifier.removeModelHistogramByName(name)
 
     def recall_object_from_histogram(self, template):
         """Return the name of the object with the closest similarity to the template.
