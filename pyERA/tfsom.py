@@ -41,30 +41,13 @@ class tfSom:
         @param high boundary for the random initialization
         @param verbose
         """
+        #Global variables
         self.tot_rows = tot_rows
         self.tot_cols = tot_cols
         self.depth = depth
-        #self._weights_matrix = np.random.uniform(low=low, high=high, size=(matrix_size, matrix_size, input_size))
-        #self.weights_matrix = tf.random_uniform(shape=matrix_size+input_size, minval=low, maxval=high, dtype = tf.float32, name="weights")
-        self.index2coord_dict = {}
-        self.euclidean_list = []
-
+        #Placeholders
         self.input_placeholder = tf.placeholder(tf.float32, shape=depth, name="input_placeholder")
         self.learning_rate_placeholder = tf.placeholder(tf.float32, shape=None, name="learning_rate_placeholder")
-        if(verbose): print self.input_placeholder
-        counter = 0
-        #for row in range(tot_rows):
-        #    for col in range(tot_cols):
-        #        index = (row, col)
-        #        weight = tf.random_uniform(shape=input_shape, minval=low, maxval=high, dtype = tf.float32, name="weight_" + str(row) + "-" + str(col))
-        #        euclidean = tf.norm(tf.subtract(input_placeholder, weight), ord='euclidean', name="euclidean_" + str(row) + "-" + str(col))
-        #        if(verbose): print weight
-        #        if(verbose): print euclidean
-        #        self.euclidean_list.append(euclidean)
-        #        self.index2coord_dict[counter] = (row,col)
-        #        counter += 1
-        #weight_initializer = tf.random_uniform(shape=[tot_rows, tot_cols, input_shape[1]], minval=low, maxval=high, dtype = tf.float32, name="weight")
-
         #Variables and saver
         self.weight = tf.get_variable("weights", [tot_rows, tot_cols, depth], initializer=tf.random_uniform_initializer(minval=low, maxval=high))
         self.tf_saver = tf.train.Saver({"weights": self.weight})
@@ -76,37 +59,22 @@ class tfSom:
         delta = tf.multiply(self.learning_rate_placeholder, difference)
         self.train = self.weight.assign(tf.add(self.weight, delta))
         #Additional calls
-        self.distance_mean = tf.reduce_mean(self.distance_matrix)
         distance_matrix_flatten = tf.reshape(self.distance_matrix, [-1])
         self.distance_argmin = tf.argmin(distance_matrix_flatten)
-        self.elements_gather = tf.gather(distance_matrix_flatten, self.distance_argmin)
+        self.distance_min = tf.gather(distance_matrix_flatten, self.distance_argmin)
+        #Error measures
+        self.distance_mean = tf.reduce_mean(self.distance_matrix)
+        weight_flatten = tf.reshape(self.weight, [-1, depth])
+        self.bmu_array = tf.gather(weight_flatten, self.distance_argmin)
+        #self.reconstruction_error = tf.norm(tf.subtract(self.input_placeholder, self.bmu_array), ord='euclidean')
 
-    #def return_BMU_index(self, sess, input_array):
-    #    """Return the coordinates of the BMU.
-    #
-    #    @param sess the tensorflow session
-    #    @param input_array a numpy array
-    #    """
-    #    output = sess.run(self.euclidean_list, feed_dict={"input_placeholder:0": input_array})
-    #    return np.argmax(output)
-
-    #def return_BMU_coord(self, sess, input_array):
-    #    """Return the coordinates of the BMU.
-    #
-    #    @param sess the tensorflow session
-    #    @param input_array a numpy array
-    #    """
-    #    output = sess.run(self.euclidean_list, feed_dict={"input_placeholder:0": input_array})
-    #    index = np.argmax(output)
-    #    return self.index2coord_dict[index]
-
-    def return_BMU_value(self, sess, input_array):
+    def return_BMU_distance(self, sess, input_array):
         """Return the coordinates of the BMU.
 
         @param sess the tensorflow session
         @param input_array a numpy array
         """
-        output = sess.run(self.elements_gather, feed_dict={self.input_placeholder: input_array})
+        output = sess.run(self.distance_min, feed_dict={self.input_placeholder: input_array})
         return output
 
     def return_BMU_coord(self, sess, input_array):
@@ -114,11 +82,12 @@ class tfSom:
 
         @param sess the tensorflow session
         @param input_array a numpy array
+        @return the index on the flat array and (row,col) in the matrix
         """
         output = sess.run([self.distance_matrix,self.distance_argmin], feed_dict={self.input_placeholder: input_array})
         index = output[1] #flatten index
         row = index/self.tot_cols
-        col = index -(row*self.tot_cols)
+        col = index - (row*self.tot_cols)
         return index, (row,col)
 
     def training_single_step(self, sess, input_array, learning_rate, radius=None):
@@ -129,12 +98,12 @@ class tfSom:
         @param input_array the vector to use for the comparison.
         @param learning_rate
         @param radius (optional) positive real, used to update the weights based on distance.
-        @return the average distance of the weights from the input array
+        @return the average distance of the weights from the input array, the min distance
         """
-        output = sess.run([self.train, self.distance_mean], 
+        output = sess.run([self.train, self.distance_mean, self.distance_min], 
                            feed_dict={self.input_placeholder: input_array, 
                                       self.learning_rate_placeholder: learning_rate})
-        return output[1]
+        return output[1], output[2]
         
 
     def save(self, sess, save_path="./log/model.ckpt", verbose=True):
@@ -165,9 +134,9 @@ def main():
 
     #Init the SOM
     print("Initializing SOM...")
-    input_shape = (32*32*3)
+    input_shape = (2)
     start = time.time()
-    my_som = tfSom(tot_rows=25, tot_cols=25, depth=input_shape, low=0.0, high=1.0, verbose=False)
+    my_som = tfSom(tot_rows=5, tot_cols=5, depth=input_shape, low=0.0, high=1.0, verbose=False)
     end = time.time()
     print("Finished in: " + str(end - start))
 
@@ -187,17 +156,24 @@ def main():
         print("")
         print("Distance: ")
         print(sess.run(my_som.distance_matrix, feed_dict={"input_placeholder:0": input_array}))
-        output = my_som.return_BMU_value(sess, input_array)
         print("")
         print("Distance mean: ")
         print(sess.run(my_som.distance_mean, feed_dict={"input_placeholder:0": input_array}))
         print("")
-        print("Value: ")
-        print output
-        output = my_som.return_BMU_coord(sess, input_array)
+        print("BMU distance: ")
+        output = my_som.return_BMU_distance(sess, input_array)
+        print output        
         print("")
-        print("Coord: ")
+        print("BMU Coord: ")
+        output = my_som.return_BMU_coord(sess, input_array)
         print output
+        print("")
+        print("BMU array: ")
+        print(sess.run(my_som.bmu_array, feed_dict={"input_placeholder:0": input_array}))
+        print("")
+        #print("Reconstruction error: ")
+        #print(sess.run(my_som.reconstruction_error, feed_dict={"input_placeholder:0": input_array}))
+        #print("")
     end = time.time()
     print("Finished in: " + str(end - start))
 
@@ -205,9 +181,10 @@ def main():
     input_array = np.random.uniform(size=input_shape)
     for i in range(10):
         #input_array = np.random.uniform(size=input_shape)
-        average_distance = my_som.training_single_step(sess, input_array, learning_rate=0.1)
+        average_distance, min_distance = my_som.training_single_step(sess, input_array, learning_rate=0.1)
         print("Step number: " + str(i))
         print("Average distance: " + str(average_distance))
+        print("Minimum distance: " + str(min_distance))
         print("")
     end = time.time()
     print("Finished in: " + str(end - start))
