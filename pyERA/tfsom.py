@@ -59,7 +59,7 @@ class tfSom:
         #a = np.array([1,2])
         #print(np.linalg.norm(a-indices_matrix, axis=2))
         #return
-        grid_matrix = tf.constant(indices_matrix, shape=[tot_rows, tot_cols, depth])
+        grid_matrix = tf.constant(indices_matrix, shape=[tot_rows, tot_cols, 2])
 
         #-Variables and saver
         self.weight = tf.get_variable("weights", [tot_rows, tot_cols, depth], initializer=tf.random_uniform_initializer(minval=low, maxval=high))
@@ -68,10 +68,11 @@ class tfSom:
         #-Distance estimation
         difference = tf.subtract(self.input_placeholder, self.weight)
         self.distance_matrix = tf.norm(difference, ord='euclidean', axis=2, name="euclidean_matrix")
+        distance_matrix_flatten = tf.reshape(self.distance_matrix, [-1])
+        self.softmax_distance_matrix = tf.reshape(tf.nn.softmax(tf.multiply(distance_matrix_flatten, -1.0)), shape=[tot_rows,tot_cols])
 
         #-Train operations
         #find the index of the best matching unit
-        distance_matrix_flatten = tf.reshape(self.distance_matrix, [-1])
         self.distance_argmin = tf.argmin(distance_matrix_flatten)
         self.distance_min = tf.gather(distance_matrix_flatten, self.distance_argmin)
         #generate a tensor with the best matching unit coord
@@ -97,6 +98,21 @@ class tfSom:
         weight_flatten = tf.reshape(self.weight, [-1, depth])
         self.bmu_array = tf.gather(weight_flatten, self.distance_argmin)
         #self.reconstruction_error = tf.norm(tf.subtract(self.input_placeholder, self.bmu_array), ord='euclidean')
+
+    def return_distance(self, sess, input_array, softmax=False):
+        """Return a matrix of distances between the input
+           array and all the units of the SOM.
+
+        @param sess the tensorflow session
+        @param input_array a numpy array
+        @param softmax (default: False) when True the sum of the elements
+            in the distance matrix is 1.0
+        """
+        if(softmax):
+            output = sess.run(self.softmax_distance_matrix, feed_dict={self.input_placeholder: input_array})
+        else:
+            output = sess.run(self.distance_matrix, feed_dict={self.input_placeholder: input_array})
+        return output
 
     def return_BMU_distance(self, sess, input_array):
         """Return the coordinates of the BMU.
@@ -166,7 +182,7 @@ def main():
 
     #Init the SOM
     print("Initializing SOM...")
-    input_shape = (2)
+    input_shape = (4)
     start = time.time()
     my_som = tfSom(tot_rows=5, tot_cols=5, depth=input_shape, low=0.0, high=1.0, verbose=False)
     end = time.time()
@@ -187,7 +203,10 @@ def main():
         print(sess.run(my_som.weight))
         print("")
         print("Distance matrix: ")
-        print(sess.run(my_som.distance_matrix, feed_dict={"input_placeholder:0": input_array}))
+        print(my_som.return_distance(sess, input_array, softmax=False))
+        print("")
+        print("Softmax Distance matrix: ")
+        print(my_som.return_distance(sess, input_array, softmax=True))
         print("")
         print("Learning rate matrix: ")
         print(sess.run(my_som.weighted_learning_rate_matrix, feed_dict={"input_placeholder:0": input_array,
@@ -226,7 +245,7 @@ def main():
 
     start = time.time()
     input_array = np.random.uniform(size=input_shape)
-    for i in range(10):
+    for i in range(1):
         #input_array = np.random.uniform(size=input_shape)
         average_distance, min_distance = my_som.training_single_step(sess, input_array, learning_rate=0.1, radius=2.0)
         print("Step number: " + str(i))
