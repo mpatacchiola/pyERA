@@ -76,7 +76,6 @@ def main():
             plt.axis("off")
             b=fig.add_subplot(1,2,2)
             img_output = np.rint(img_output_matrix).astype(np.uint8)
-            print(img_output)
             imgplot = plt.imshow(img_output)
             plt.axis("off")
             plt.savefig(output_path + str(epoch) + ".png", dpi=200, facecolor='black')
